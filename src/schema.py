@@ -1,5 +1,6 @@
 from typing import TypedDict, Literal, Dict
 
+
 class ProjectMetadata(TypedDict):
     name: str
     category: Literal["MODEL", "DATASET", "CODE"]
@@ -19,7 +20,7 @@ class ProjectMetadata(TypedDict):
     license: float
     license_latency: int
 
-    size_score: Dict[str, float]  # { "raspberry_pi": 0.8, "jetson_nano": 0.9, ... }
+    size_score: Dict[str, float]  # {"raspberry_pi": 0.8, ... }
     size_score_latency: int
 
     dataset_and_code_score: float

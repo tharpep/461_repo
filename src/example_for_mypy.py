@@ -1,7 +1,7 @@
 from schema import ProjectMetadata
 
 project: ProjectMetadata = {
-    "name": "Example Project",  
+    "name": "Example Project",
     "category": "MODEL",
     "net_score": 0.85,
     "net_score_latency": 2,
@@ -23,9 +23,11 @@ project: ProjectMetadata = {
     "code_quality_latency": 2,
 }
 
+
 def process_metadata(data: ProjectMetadata) -> None:
     print(data["name"])
     print(data["category"])
+
 
 if __name__ == "__main__":
     process_metadata(project)
