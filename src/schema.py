@@ -1,4 +1,4 @@
-from typing import TypedDict, Literal, Dict
+from typing import Dict, Literal, TypedDict
 
 
 class ProjectMetadata(TypedDict):
