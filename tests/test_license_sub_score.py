@@ -1,11 +1,11 @@
 from unittest.mock import Mock, patch
+from typing import Optional, Tuple, Callable
 
 import pytest
 
 from src import sub_scores
 
-# Example README text with YAML license
-README_YAML = """---
+README_YAML: str = """---
 name: Example Model
 license: MIT
 ---
@@ -13,22 +13,19 @@ license: MIT
 This is a test model.
 """
 
-# Example README text with Markdown license section
-README_MD = """
+README_MD: str = """
 # Example Model
 
 ## License
 Apache-2.0
 """
 
-# README without license
-README_NONE = """
+README_NONE: str = """
 # Example Model
 No license here.
 """
 
-# README with multiple license headings
-README_MULTIPLE = """
+README_MULTIPLE: str = """
 # Model
 ## License
 MIT
@@ -36,79 +33,87 @@ MIT
 GPL-2.0
 """
 
-# Empty README
-README_EMPTY = ""
+README_EMPTY: str = ""
 
 
 @pytest.mark.parametrize(
     "readme_text,expected_score",
     [
-        (README_YAML, 1),          # MIT is compatible
-        (README_MD, 0),            # Apache-2.0 not compatible
-        (README_NONE, 0),          # No license
-        ("---\nlicense: Apache-2.0\n---", 0),  # Incompatible YAML license
-        ("---\nlicense: MIT License\n---", 1),  # Compatible test
-    ]
+        (README_YAML, 1),
+        (README_MD, 0),
+        (README_NONE, 0),
+        ("---\nlicense: Apache-2.0\n---", 0),
+        ("---\nlicense: MIT License\n---", 1),
+    ],
 )
-def test_license_sub_score(monkeypatch, readme_text, expected_score):
-    monkeypatch.setattr(sub_scores, "fetch_readme", lambda url: readme_text)
-    score, elapsed = sub_scores.license_sub_score(
-        "https://huggingface.co/mock-model")
+def test_license_sub_score(
+    monkeypatch: pytest.MonkeyPatch, readme_text: str, expected_score: int
+) -> None:
+    def mock_fetch_readme(url: str) -> str:
+        return readme_text
+
+    monkeypatch.setattr(sub_scores, "fetch_readme", mock_fetch_readme)
+    score, elapsed = sub_scores.license_sub_score("https://huggingface.co/mock-model")
     assert score == expected_score
-    assert elapsed >= 0  # should return some elapsed time
+    assert elapsed >= 0
 
 
-def test_license_sub_score_empty(monkeypatch):
-    # Test empty README
-    monkeypatch.setattr(sub_scores, "fetch_readme", lambda url: README_EMPTY)
-    score, _ = sub_scores.license_sub_score(
-        "https://huggingface.co/mock-model")
+def test_license_sub_score_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    def mock_fetch_readme(url: str) -> str:
+        return README_EMPTY
+
+    monkeypatch.setattr(sub_scores, "fetch_readme", mock_fetch_readme)
+    score, _ = sub_scores.license_sub_score("https://huggingface.co/mock-model")
     assert score == 0
 
 
-def test_extract_license_yaml():
-    license_str = sub_scores.extract_license(README_YAML)
-    assert license_str == "MIT".lower()
+def test_extract_license_yaml() -> None:
+    license_str: Optional[str] = sub_scores.extract_license(README_YAML)
+    assert license_str == "mit"
 
 
-def test_extract_license_md():
-    license_str = sub_scores.extract_license(README_MD)
-    assert license_str == "Apache-2.0".lower()
+def test_extract_license_md() -> None:
+    license_str: Optional[str] = sub_scores.extract_license(README_MD)
+    assert license_str == "apache-2.0"
 
 
-def test_extract_license_none():
-    license_str = sub_scores.extract_license(README_NONE)
+def test_extract_license_none() -> None:
+    license_str: Optional[str] = sub_scores.extract_license(README_NONE)
     assert license_str is None
 
 
-def test_extract_license_multiple():
-    license_str = sub_scores.extract_license(README_MULTIPLE)
-    assert license_str.lower() == "mit"  # first license heading is returned
+def test_extract_license_multiple() -> None:
+    license_str: Optional[str] = sub_scores.extract_license(README_MULTIPLE)
+    assert license_str is not None
+    assert license_str.lower() == "mit"
 
 
 @patch("requests.get")
-def test_fetch_readme_success(mock_get):
-    mock_resp = Mock()
+def test_fetch_readme_success(mock_get: Mock) -> None:
+    mock_resp: Mock = Mock()
     mock_resp.raise_for_status = Mock()
     mock_resp.text = README_YAML
     mock_get.return_value = mock_resp
-    result = sub_scores.fetch_readme("https://huggingface.co/mock-model")
+
+    result: Optional[str] = sub_scores.fetch_readme("https://huggingface.co/mock-model")
+    assert result is not None
     assert "MIT" in result
 
 
 @patch("requests.get")
-def test_fetch_readme_tree_main(mock_get):
-    mock_resp = Mock()
+def test_fetch_readme_tree_main(mock_get: Mock) -> None:
+    mock_resp: Mock = Mock()
     mock_resp.raise_for_status = Mock()
     mock_resp.text = "Tree main README"
     mock_get.return_value = mock_resp
 
-    result = sub_scores.fetch_readme("https://huggingface.co/model/tree/main")
+    result: Optional[str] = sub_scores.fetch_readme("https://huggingface.co/model/tree/main")
+    assert result is not None
     assert result == "Tree main README"
 
 
 @patch("requests.get")
-def test_fetch_readme_failure(mock_get):
+def test_fetch_readme_failure(mock_get: Mock) -> None:
     mock_get.side_effect = Exception("Network error")
-    result = sub_scores.fetch_readme("https://huggingface.co/mock-model")
+    result: Optional[str] = sub_scores.fetch_readme("https://huggingface.co/mock-model")
     assert result is None
