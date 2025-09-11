@@ -2,6 +2,7 @@ import os
 import re
 import requests
 from typing import Optional
+import time
 
 # Define which licenses are compatible with LGPL v2.1
 # This list is from two websites:
@@ -13,10 +14,12 @@ COMPATIBLE_LICENSES = {
     
 }
 
+"""
+Fetch the README.md text from a Hugging Face model repository. Uses the model URL. 
+Checks if the given URL is for the model page or for the code tree. 
+"""
+
 def fetch_readme(model_url: str) -> Optional[str]:
-    """
-    Fetch the README.md text from a Hugging Face model repository.
-    """
     # Convert tree/main URL into raw README URL
     if "tree/main" in model_url:
         base = model_url.split("tree/main")[0]
@@ -33,12 +36,13 @@ def fetch_readme(model_url: str) -> Optional[str]:
             print(f"[ERROR] Failed to fetch README: {e}")
         return None
 
-
+"""
+Extract license information from a Hugging Face README.md file.
+Handles both YAML front matter and '## License' sections. (The example is a yaml but 
+it says to look for a heading so I added both).
+Doesn't use hugging face API. 
+"""
 def extract_license(readme_text: str) -> Optional[str]:
-    """
-    Extract license information from a Hugging Face README.md file.
-    Handles both YAML front matter and '## License' sections.
-    """
     # Case 1: YAML front matter
     yaml_match = re.search(r"^---[\s\S]*?license:\s*([^\n]+)", readme_text, re.IGNORECASE | re.MULTILINE)
     if yaml_match:
@@ -55,20 +59,20 @@ def extract_license(readme_text: str) -> Optional[str]:
     return None
 
 
-
-def calculate_license_score(model_url: str) -> int:
-    """
-    Calculate license sub-score:
-    - 1 if license is present and compatible with LGPL v2.1
-    - 0 if not found or incompatible
-    """
+"""
+Calculate license sub-score:
+- 1 if license is present and compatible with LGPL v2.1
+- 0 if not found or incompatible
+"""
+def license_sub_score(model_url: str) -> tuple[int, float]:
+    start_time = time.time()
     readme = fetch_readme(model_url)
-    print(f"Readme: {readme}")
+    #print(f"Readme: {readme}")
     if not readme:
         return 0
 
     license_str = extract_license(readme)
-    print(f"License: {license_str}")
+    #print(f"License: {license_str}")
     if not license_str:
         return 0
 
@@ -77,9 +81,11 @@ def calculate_license_score(model_url: str) -> int:
 
     for comp in COMPATIBLE_LICENSES:
         if comp.replace("-", "").replace(" ", "") in normalized:
-            return 1
-    return 0
+            end_time = time.time()
+            return (1, end_time - start_time)
+    end_time = time.time()
+    return (0, end_time - start_time)
 
 if __name__ == "__main__":
     url = "https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking"
-    print(calculate_license_score(url))  # -> 1 if compatible, 0 otherwise
+    print(license_sub_score(url))  # -> 1 if compatible, 0 otherwise
