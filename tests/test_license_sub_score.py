@@ -46,7 +46,7 @@ README_EMPTY: str = ""
         ("---\nlicense: MIT License\n---", 1),
     ],
 )
-def test_license_sub_score(
+def test_license_sub_score( # type: ignore[misc]
     monkeypatch: pytest.MonkeyPatch, readme_text: str, expected_score: int
 ) -> None:
     def mock_fetch_readme(url: str) -> str:
