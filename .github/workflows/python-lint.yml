@@ -20,7 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 isort mypy
+          pip install flake8 isort mypy requests
+          pip install types-requests
 
       - name: Run flake8 (Python linter)
         run: |
