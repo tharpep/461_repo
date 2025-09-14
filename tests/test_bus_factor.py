@@ -6,11 +6,13 @@ import os
 # Add the src directory to the path so we can import bus_factor
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from bus_factor import bus_factor_score, get_huggingface_contributors  # noqa: E402
+from bus_factor import (  # noqa: E402
+    bus_factor_score, get_huggingface_contributors
+)
 
 
 class TestBusFactorScore(unittest.TestCase):
-    """Unit tests for the bus_factor_score function with timing measurements."""
+    """Unit tests for bus_factor_score function with timing measurements."""
 
     def setUp(self):
         """Set up test fixtures before each test method."""
@@ -57,7 +59,7 @@ class TestBusFactorScore(unittest.TestCase):
                             f"Function took too long: {execution_time:.3f}s")
 
     def test_bus_factor_score_correctness(self):
-        """Test that bus_factor_score returns the correct contributor counts."""
+        """Test that bus_factor_score returns correct contributor counts."""
         print("\n" + "="*60)
         print("BUS FACTOR SCORE CORRECTNESS TESTS")
         print("="*60)
@@ -91,7 +93,7 @@ class TestBusFactorScore(unittest.TestCase):
             self.assertGreaterEqual(actual_result, 0)
 
     def test_get_huggingface_contributors_timing(self):
-        """Test get_huggingface_contributors function and measure execution time."""
+        """Test get_huggingface_contributors function and measure execution."""
         print("\n" + "="*60)
         print("HUGGING FACE CONTRIBUTORS TIMING TESTS")
         print("="*60)
@@ -200,8 +202,8 @@ def run_timing_tests():
     print(f"Tests run: {result.testsRun}")
     print(f"Failures: {len(result.failures)}")
     print(f"Errors: {len(result.errors)}")
-    success_rate = ((result.testsRun - len(result.failures) - len(result.errors))
-                    / result.testsRun * 100)
+    success_rate = ((result.testsRun - len(result.failures) -
+                     len(result.errors)) / result.testsRun * 100)
     print(f"Success rate: {success_rate:.1f}%")
 
     return result.wasSuccessful()

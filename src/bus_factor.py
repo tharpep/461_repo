@@ -52,7 +52,8 @@ def bus_factor_score(model_id: str) -> int:
     to a Hugging Face model as shown in the Hugging Face UI.
 
     Args:
-        model_id: The Hugging Face model ID (e.g., "moonshotai/Kimi-K2-Instruct-0905")
+        model_id: The Hugging Face model ID
+                 (e.g., "moonshotai/Kimi-K2-Instruct-0905")
 
     Returns:
         int: Number of unique contributors from Hugging Face Files page
