@@ -1,20 +1,19 @@
-import unittest
-import time
-import sys
 import os
+import sys
+import time
+import unittest
 
 # Add the src directory to the path so we can import bus_factor
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from bus_factor import (  # noqa: E402
-    bus_factor_score, get_huggingface_contributors
-)
+from bus_factor import bus_factor_score  # noqa: E402
+from bus_factor import get_huggingface_contributors  # noqa: E402
 
 
 class TestBusFactorScore(unittest.TestCase):
     """Unit tests for bus_factor_score function with timing measurements."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test fixtures before each test method."""
         self.test_models = [
             "moonshotai/Kimi-K2-Instruct-0905",
@@ -31,7 +30,7 @@ class TestBusFactorScore(unittest.TestCase):
             "microsoft/DialoGPT-medium": 6
         }
 
-    def test_bus_factor_score_timing(self):
+    def test_bus_factor_score_timing(self) -> None:
         """Test bus_factor_score function and measure execution time."""
         print("\n" + "="*60)
         print("BUS FACTOR SCORE TIMING TESTS")
@@ -58,7 +57,7 @@ class TestBusFactorScore(unittest.TestCase):
             self.assertLess(execution_time, 10.0,
                             f"Function took too long: {execution_time:.3f}s")
 
-    def test_bus_factor_score_correctness(self):
+    def test_bus_factor_score_correctness(self) -> None:
         """Test that bus_factor_score returns correct contributor counts."""
         print("\n" + "="*60)
         print("BUS FACTOR SCORE CORRECTNESS TESTS")
@@ -92,7 +91,7 @@ class TestBusFactorScore(unittest.TestCase):
             self.assertIsInstance(actual_result, int)
             self.assertGreaterEqual(actual_result, 0)
 
-    def test_get_huggingface_contributors_timing(self):
+    def test_get_huggingface_contributors_timing(self) -> None:
         """Test get_huggingface_contributors function and measure execution."""
         print("\n" + "="*60)
         print("HUGGING FACE CONTRIBUTORS TIMING TESTS")
@@ -115,7 +114,7 @@ class TestBusFactorScore(unittest.TestCase):
             self.assertIsInstance(result, int)
             self.assertGreaterEqual(result, 0)
 
-    def test_invalid_model(self):
+    def test_invalid_model(self) -> None:
         """Test that invalid model IDs return 0."""
         print("\n" + "="*60)
         print("INVALID MODEL TESTS")
@@ -142,7 +141,7 @@ class TestBusFactorScore(unittest.TestCase):
             # Should return 0 for invalid models
             self.assertEqual(result, 0)
 
-    def test_performance_benchmark(self):
+    def test_performance_benchmark(self) -> None:
         """Run a performance benchmark with multiple iterations."""
         print("\n" + "="*60)
         print("PERFORMANCE BENCHMARK")
@@ -183,7 +182,7 @@ class TestBusFactorScore(unittest.TestCase):
         self.assertLess(max_time, 10.0, "Maximum execution time too slow")
 
 
-def run_timing_tests():
+def run_timing_tests() -> bool:
     """Run all tests with detailed timing information."""
     print("Starting Bus Factor Score Unit Tests with Timing...")
     print("="*80)

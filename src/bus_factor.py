@@ -1,5 +1,6 @@
-import requests
 import re
+
+import requests
 
 
 def get_huggingface_contributors(model_id: str) -> int:
