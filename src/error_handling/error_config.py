@@ -8,7 +8,7 @@ This module provides centralized configuration for:
 - Error handling behavior
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Logging configuration
 LOGGING_CONFIG = {
@@ -42,7 +42,7 @@ DEFAULT_VALUES = {
 SEVERITY_THRESHOLDS = {
     "log_levels": {
         "critical": "CRITICAL",
-        "high": "ERROR", 
+        "high": "ERROR",
         "medium": "WARNING",
         "low": "INFO"
     },
@@ -58,7 +58,7 @@ HF_CONFIG = {
     "user_agent": "ML-Score-Calculator/1.0"
 }
 
-# GitHub specific configuration  
+# GitHub specific configuration
 GITHUB_CONFIG = {
     "api_base_url": "https://api.github.com",
     "timeout": 15,
@@ -131,13 +131,14 @@ RECOVERY_STRATEGIES = {
     }
 }
 
+
 def get_config(section: str) -> Dict[str, Any]:
     """
     Get configuration for a specific section.
-    
+
     Args:
         section: Configuration section name
-        
+
     Returns:
         Dictionary with configuration values
     """
@@ -152,25 +153,25 @@ def get_config(section: str) -> Dict[str, Any]:
         "messages": ERROR_MESSAGES,
         "recovery": RECOVERY_STRATEGIES
     }
-    
-    return config_map.get(section, {})
+
+    return config_map.get(section, {})  # type: ignore
 
 
-def get_error_message(category: str, key: str, **kwargs) -> str:
+def get_error_message(category: str, key: str, **kwargs: Any) -> str:
     """
     Get a formatted error message.
-    
+
     Args:
         category: Error message category
         key: Error message key
         **kwargs: Format parameters
-        
+
     Returns:
         Formatted error message
     """
     messages = ERROR_MESSAGES.get(category, {})
     template = messages.get(key, "Unknown error")
-    
+
     try:
         return template.format(**kwargs)
     except KeyError as e:
@@ -180,10 +181,10 @@ def get_error_message(category: str, key: str, **kwargs) -> str:
 def get_recovery_strategy(error_type: str) -> Dict[str, Any]:
     """
     Get recovery strategy for a specific error type.
-    
+
     Args:
         error_type: Type of error
-        
+
     Returns:
         Recovery strategy configuration
     """
