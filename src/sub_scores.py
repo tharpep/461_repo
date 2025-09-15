@@ -1,9 +1,13 @@
-import os
 import re
 import time
 from typing import Optional
 
 import requests
+
+from .logging_config import get_logger, log_performance, log_error_with_context
+
+# Initialize logger for this module
+logger = get_logger(__name__)
 
 # Define which licenses are compatible with LGPL v2.1
 # This list is from two websites:
@@ -24,6 +28,8 @@ the code tree.
 
 
 def fetch_readme(model_url: str) -> Optional[str]:
+    logger.debug(f"Fetching README from: {model_url}")
+    
     # Convert tree/main URL into raw README URL
     if "tree/main" in model_url:
         base = model_url.split("tree/main")[0]
@@ -31,13 +37,15 @@ def fetch_readme(model_url: str) -> Optional[str]:
     else:
         raw_url = f"{model_url}/resolve/main/README.md"
 
+    logger.debug(f"Converted to raw URL: {raw_url}")
+
     try:
         response = requests.get(raw_url, timeout=10)
         response.raise_for_status()
+        logger.info(f"Successfully fetched README from {model_url}")
         return str(response.text)
     except Exception as e:
-        if int(os.getenv("LOG_LEVEL", "0")) > 0:
-            print(f"[ERROR] Failed to fetch README: {e}")
+        log_error_with_context(e, f"Failed to fetch README from {model_url}", logger)
         return None
 
 
@@ -76,16 +84,22 @@ Calculate license sub-score:
 
 def license_sub_score(model_url: str) -> tuple[int, float]:
     start_time = time.time()
+    logger.debug(f"Calculating license sub-score for: {model_url}")
+    
     readme = fetch_readme(model_url)
-    # print(f"Readme: {readme}")
     if not readme:
+        logger.warning(f"No README found for {model_url}")
         end_time = time.time()
+        log_performance("license_sub_score (no README)", end_time - start_time, logger)
         return (0, end_time - start_time)
 
     license_str = extract_license(readme)
-    # print(f"License: {license_str}")
+    logger.debug(f"Extracted license: {license_str}")
+    
     if not license_str:
+        logger.warning(f"No license found in README for {model_url}")
         end_time = time.time()
+        log_performance("license_sub_score (no license)", end_time - start_time, logger)
         return (0, end_time - start_time)
 
     # Normalize
@@ -94,9 +108,14 @@ def license_sub_score(model_url: str) -> tuple[int, float]:
 
     for comp in COMPATIBLE_LICENSES:
         if comp.replace("-", "").replace(" ", "") in normalized:
+            logger.info(f"Found compatible license '{comp}' for {model_url}")
             end_time = time.time()
+            log_performance("license_sub_score (compatible)", end_time - start_time, logger)
             return (1, end_time - start_time)
+    
+    logger.info(f"No compatible license found for {model_url} (found: {license_str})")
     end_time = time.time()
+    log_performance("license_sub_score (incompatible)", end_time - start_time, logger)
     return (0, end_time - start_time)
 
 
