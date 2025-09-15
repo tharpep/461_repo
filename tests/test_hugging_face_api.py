@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from unittest.mock import Mock, patch
 import json
 
@@ -10,7 +10,7 @@ from src import hugging_face_api
 # Sample API response data
 VALID_MODEL_RESPONSE: Dict[str, Any] = {
     "id": "gpt2",
-    "modelId": "gpt2", 
+    "modelId": "gpt2",
     "author": "openai-community",
     "downloads": 1000000,
     "likes": 500,
@@ -33,7 +33,7 @@ EMPTY_MODEL_RESPONSE: Dict[str, Any] = {}
     "model_id,expected_success",
     [
         ("gpt2", True),
-        ("microsoft/DialoGPT-large", True),  
+        ("microsoft/DialoGPT-large", True),
         ("bert-base-uncased", True),
         ("", False),
         ("   ", False),
@@ -51,15 +51,15 @@ def test_get_model_info_inputs(
         return mock_resp
 
     monkeypatch.setattr("requests.get", mock_requests_get)
-    
+
     model_info, elapsed = hugging_face_api.get_model_info(model_id)
-    
+
     if expected_success:
         assert model_info is not None
         assert isinstance(model_info, dict)
     else:
         assert model_info is None
-    
+
     assert elapsed >= 0
 
 
@@ -72,13 +72,13 @@ def test_get_model_info_success(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("gpt2")
-    
+
     assert model_info is not None
     assert model_info["id"] == "gpt2"
     assert model_info["author"] == "openai-community"
     assert model_info["cardData"]["license"] == "mit"
     assert elapsed >= 0
-    
+
     # Verify correct API URL was called
     mock_get.assert_called_once()
     args, kwargs = mock_get.call_args
@@ -95,7 +95,7 @@ def test_get_model_info_minimal_response(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("test/minimal")
-    
+
     assert model_info is not None
     assert model_info["id"] == "test/minimal-model"
     assert elapsed >= 0
@@ -110,7 +110,7 @@ def test_get_model_info_empty_response(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("test/empty")
-    
+
     assert model_info is not None
     assert isinstance(model_info, dict)
     assert len(model_info) == 0
@@ -127,7 +127,7 @@ def test_get_model_info_http_404(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("nonexistent/model")
-    
+
     assert model_info is None
     assert elapsed >= 0
 
@@ -142,7 +142,7 @@ def test_get_model_info_http_500(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("test/model")
-    
+
     assert model_info is None
     assert elapsed >= 0
 
@@ -153,7 +153,7 @@ def test_get_model_info_timeout(mock_get: Mock) -> None:
     mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
     model_info, elapsed = hugging_face_api.get_model_info("test/model")
-    
+
     assert model_info is None
     assert elapsed >= 0
 
@@ -161,10 +161,11 @@ def test_get_model_info_timeout(mock_get: Mock) -> None:
 @patch("requests.get")
 def test_get_model_info_connection_error(mock_get: Mock) -> None:
     """Test handling of network connection errors."""
-    mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
+    mock_get.side_effect = requests.exceptions.ConnectionError(
+        "Connection failed")
 
     model_info, elapsed = hugging_face_api.get_model_info("test/model")
-    
+
     assert model_info is None
     assert elapsed >= 0
 
@@ -178,7 +179,7 @@ def test_get_model_info_json_decode_error(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     model_info, elapsed = hugging_face_api.get_model_info("test/model")
-    
+
     assert model_info is None
     assert elapsed >= 0
 
@@ -192,7 +193,7 @@ def test_get_model_info_strips_whitespace() -> None:
         mock_get.return_value = mock_resp
 
         model_info, elapsed = hugging_face_api.get_model_info("  gpt2  ")
-        
+
         assert model_info is not None
         # Verify the stripped model_id was used in the URL
         args, _ = mock_get.call_args
@@ -209,7 +210,7 @@ def test_get_model_info_api_url_construction(mock_get: Mock) -> None:
     mock_get.return_value = mock_resp
 
     hugging_face_api.get_model_info("test/model")
-    
+
     args, _ = mock_get.call_args
     expected_url = f"{hugging_face_api.HF_API_BASE}/models/test/model"
     assert args[0] == expected_url
@@ -224,22 +225,23 @@ def test_timing_measurement() -> None:
         mock_get.return_value = mock_resp
 
         model_info, elapsed = hugging_face_api.get_model_info("test/model")
-        
+
         assert elapsed >= 0.0
         assert isinstance(elapsed, float)
 
 
 @patch("os.getenv")
 @patch("requests.get")
-def test_log_level_environment_variable(mock_get: Mock, mock_getenv: Mock) -> None:
+def test_log_level_environment_variable(mock_get: Mock,
+                                        mock_getenv: Mock) -> None:
     """Test that LOG_LEVEL environment variable controls error printing."""
     mock_get.side_effect = Exception("Test error")
-    
+
     # Test with LOG_LEVEL = 0 (no logging)
     mock_getenv.return_value = "0"
     model_info, elapsed = hugging_face_api.get_model_info("test/model")
     assert model_info is None
-    
+
     # Test with LOG_LEVEL = 1 (logging enabled)
     mock_getenv.return_value = "1"
     model_info, elapsed = hugging_face_api.get_model_info("test/model")

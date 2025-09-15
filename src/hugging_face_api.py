@@ -7,27 +7,25 @@ import requests
 HF_API_BASE = "https://huggingface.co/api"
 
 
-"""
-Fetch model information from Hugging Face API.
-Returns model metadata as dictionary.
-"""
-
-
 def get_model_info(model_id: str) -> tuple[Optional[Dict[str, Any]], float]:
+    """
+    Fetch model information from Hugging Face API.
+    Returns model metadata as dictionary.
+    """
     start_time = time.time()
-    
+
     if not model_id or not model_id.strip():
         end_time = time.time()
         return (None, end_time - start_time)
-    
+
     api_url = f"{HF_API_BASE}/models/{model_id.strip()}"
-    
+
     try:
         response = requests.get(api_url, timeout=10)
         response.raise_for_status()
         end_time = time.time()
         return (response.json(), end_time - start_time)
-        
+
     except Exception as e:
         end_time = time.time()
         if int(os.getenv("LOG_LEVEL", "0")) > 0:
