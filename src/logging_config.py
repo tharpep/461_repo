@@ -18,6 +18,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+
 class LogLevel(Enum):
     """Log level enumeration for better type safety."""
     DEBUG = "DEBUG"
@@ -25,6 +26,7 @@ class LogLevel(Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
+
 
 class LoggingConfig:
     """Centralized logging configuration manager."""
@@ -56,7 +58,8 @@ class LoggingConfig:
             )
         elif format_type == "detailed":
             return logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+                '%(asctime)s - %(name)s - %(levelname)s - '
+                '%(filename)s:%(lineno)d - %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
         elif format_type == "json":
@@ -64,10 +67,12 @@ class LoggingConfig:
         else:
             return logging.Formatter('%(message)s')
 
-    def setup_logger(self, name: str, correlation_id: Optional[str] = None) -> logging.Logger:
+    def setup_logger(self, name: str,
+                     correlation_id: Optional[str] = None) -> logging.Logger:
         """Set up a logger with console and file handlers."""
         logger = logging.getLogger(name)
-        logger.setLevel(logging.DEBUG)  # Set to lowest level, handlers will filter
+        # Set to lowest level, handlers will filter
+        logger.setLevel(logging.DEBUG)
 
         # Clear existing handlers to avoid duplicates
         logger.handlers.clear()
@@ -79,7 +84,8 @@ class LoggingConfig:
         logger.addHandler(console_handler)
 
         # File handler with rotation
-        log_file = self.log_dir / f"{name}_{datetime.now().strftime('%Y%m%d')}.log"
+        log_file = (self.log_dir /
+                    f"{name}_{datetime.now().strftime('%Y%m%d')}.log")
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
             maxBytes=self.max_file_size,
@@ -92,14 +98,16 @@ class LoggingConfig:
 
         # Add correlation ID to log records if provided
         if correlation_id:
-            old_factory = logging.getLogRecordFactory()
+
             def record_factory(*args, **kwargs):
                 record = old_factory(*args, **kwargs)
                 record.correlation_id = correlation_id
                 return record
+            old_factory = logging.getLogRecordFactory()
             logging.setLogRecordFactory(record_factory)
 
         return logger
+
 
 class JsonFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
@@ -126,8 +134,9 @@ class JsonFormatter(logging.Formatter):
 
         return str(log_entry)
 
+
 class LoggerManager:
-    """Singleton logger manager to ensure consistent logging across the application."""
+    """Singleton logger manager to ensure consistent logging."""
 
     _instance = None
     _loggers: Dict[str, logging.Logger] = {}
@@ -138,25 +147,31 @@ class LoggerManager:
             cls._instance._config = LoggingConfig()
         return cls._instance
 
-    def get_logger(self, name: str, correlation_id: Optional[str] = None) -> logging.Logger:
+    def get_logger(self, name: str,
+                   correlation_id: Optional[str] = None) -> logging.Logger:
         """Get or create a logger with the given name."""
         if name not in self._loggers:
-            self._loggers[name] = self._config.setup_logger(name, correlation_id)
+            self._loggers[name] = self._config.setup_logger(
+                name, correlation_id)
         return self._loggers[name]
 
     def set_correlation_id(self, correlation_id: str) -> None:
         """Set correlation ID for all future log records."""
-        old_factory = logging.getLogRecordFactory()
+
         def record_factory(*args, **kwargs):
             record = old_factory(*args, **kwargs)
             record.correlation_id = correlation_id
             return record
+        old_factory = logging.getLogRecordFactory()
         logging.setLogRecordFactory(record_factory)
+
 
 # Global logger manager instance
 logger_manager = LoggerManager()
 
-def get_logger(name: str, correlation_id: Optional[str] = None) -> logging.Logger:
+
+def get_logger(name: str,
+               correlation_id: Optional[str] = None) -> logging.Logger:
     """
     Get a logger instance.
 
@@ -168,6 +183,7 @@ def get_logger(name: str, correlation_id: Optional[str] = None) -> logging.Logge
         Configured logger instance
     """
     return logger_manager.get_logger(name, correlation_id)
+
 
 def set_log_level(level: str) -> None:
     """
@@ -185,8 +201,9 @@ def set_log_level(level: str) -> None:
             if isinstance(handler, logging.StreamHandler):
                 handler.setLevel(level_int)
 
+
 def log_function_call(func_name: str, args: Dict[str, Any] = None,
-                     logger: Optional[logging.Logger] = None) -> None:
+                      logger: Optional[logging.Logger] = None) -> None:
     """
     Log function call with arguments for debugging.
 
@@ -203,8 +220,9 @@ def log_function_call(func_name: str, args: Dict[str, Any] = None,
     else:
         logger.debug(f"Calling {func_name}")
 
+
 def log_performance(operation: str, duration: float,
-                   logger: Optional[logging.Logger] = None) -> None:
+                    logger: Optional[logging.Logger] = None) -> None:
     """
     Log performance metrics.
 
@@ -218,8 +236,9 @@ def log_performance(operation: str, duration: float,
 
     logger.info(f"Performance: {operation} completed in {duration:.3f}s")
 
+
 def log_error_with_context(error: Exception, context: str = "",
-                          logger: Optional[logging.Logger] = None) -> None:
+                           logger: Optional[logging.Logger] = None) -> None:
     """
     Log error with additional context information.
 
@@ -235,6 +254,7 @@ def log_error_with_context(error: Exception, context: str = "",
         logger.error(f"Error in {context}: {str(error)}", exc_info=True)
     else:
         logger.error(f"Error: {str(error)}", exc_info=True)
+
 
 # Convenience function for backward compatibility
 def setup_logging() -> None:

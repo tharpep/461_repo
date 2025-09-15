@@ -15,13 +15,14 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.logging_config import (LoggerManager, LoggingConfig, get_logger,
                                 log_error_with_context, log_function_call,
                                 log_performance, set_log_level)
+
 
 class TestLoggingConfig:
     """Test LoggingConfig class functionality."""
@@ -71,12 +72,17 @@ class TestLoggingConfig:
         assert len(logger.handlers) == 2  # Console + File
 
         # Check console handler
-        console_handler = next(h for h in logger.handlers if isinstance(h, logging.StreamHandler))
+        console_handler = next(
+            h for h in logger.handlers
+            if isinstance(h, logging.StreamHandler))
         assert console_handler.level == self.config.console_level
 
         # Check file handler
-        file_handler = next(h for h in logger.handlers if isinstance(h, logging.handlers.RotatingFileHandler))
+        file_handler = next(
+            h for h in logger.handlers
+            if isinstance(h, logging.handlers.RotatingFileHandler))
         assert file_handler.level == self.config.file_level
+
 
 class TestLoggerManager:
     """Test LoggerManager singleton functionality."""
@@ -118,6 +124,7 @@ class TestLoggerManager:
 
         assert logger1 is logger2
 
+
 class TestLoggingUtilities:
     """Test utility functions for logging."""
 
@@ -147,7 +154,9 @@ class TestLoggingUtilities:
         set_log_level("ERROR")
 
         # Check that console handler level was updated
-        console_handler = next(h for h in logger.handlers if isinstance(h, logging.StreamHandler))
+        console_handler = next(
+            h for h in logger.handlers
+            if isinstance(h, logging.StreamHandler))
         assert console_handler.level == logging.ERROR
 
     def test_log_performance(self, caplog):
@@ -176,7 +185,9 @@ class TestLoggingUtilities:
         with caplog.at_level(logging.DEBUG):
             log_function_call("test_function", {"arg1": "value1"}, logger)
 
-        assert "Calling test_function with args: {'arg1': 'value1'}" in caplog.text
+        expected = "Calling test_function with args: {'arg1': 'value1'}"
+        assert expected in caplog.text
+
 
 class TestLogRotation:
     """Test log file rotation functionality."""
@@ -198,11 +209,11 @@ class TestLogRotation:
 
         file_handler = next(
             h for h in logger.handlers
-            if isinstance(h, logging.handlers.RotatingFileHandler)
-        )
+            if isinstance(h, logging.handlers.RotatingFileHandler))
 
         assert file_handler.maxBytes == self.config.max_file_size
         assert file_handler.backupCount == self.config.backup_count
+
 
 class TestEnvironmentConfiguration:
     """Test environment variable configuration."""
@@ -235,6 +246,7 @@ class TestEnvironmentConfiguration:
             assert config.max_file_size == 5242880
             assert config.backup_count == 3
 
+
 class TestJsonFormatter:
     """Test JSON formatter functionality."""
 
@@ -258,6 +270,7 @@ class TestJsonFormatter:
         assert "level" in formatted
         assert "message" in formatted
         assert "Test message" in formatted
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
