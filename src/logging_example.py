@@ -6,7 +6,9 @@ and utilities in your application code.
 """
 
 import time
-from logging_config import get_logger, log_performance, log_error_with_context, set_log_level
+
+from logging_config import (get_logger, log_error_with_context,
+                            log_performance, set_log_level)
 
 
 def example_function():
@@ -48,7 +50,7 @@ def example_with_correlation_id():
 def example_environment_configuration():
     """Example showing environment variable configuration."""
     import os
-    
+
     # Set environment variables for different configurations
     os.environ["CONSOLE_LOG_LEVEL"] = "INFO"
     os.environ["FILE_LOG_LEVEL"] = "DEBUG"

@@ -1,6 +1,6 @@
-from typing import Optional, Dict, Any
-from unittest.mock import Mock, patch
 import json
+from typing import Any, Dict, Optional
+from unittest.mock import Mock, patch
 
 import pytest
 

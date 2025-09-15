@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from .logging_config import get_logger, log_performance, log_error_with_context
+from .logging_config import get_logger, log_error_with_context, log_performance
 
 # Initialize logger for this module
 logger = get_logger(__name__)
@@ -19,17 +19,15 @@ COMPATIBLE_LICENSES = {
     'unlicense', 'zlib',
 }
 
-
 """
 Fetch the README.md text from a Hugging Face model repository. Uses the
 model URL. Checks if the given URL is for the model page or for
 the code tree.
 """
 
-
 def fetch_readme(model_url: str) -> Optional[str]:
     logger.debug(f"Fetching README from: {model_url}")
-    
+
     # Convert tree/main URL into raw README URL
     if "tree/main" in model_url:
         base = model_url.split("tree/main")[0]
@@ -48,14 +46,12 @@ def fetch_readme(model_url: str) -> Optional[str]:
         log_error_with_context(e, f"Failed to fetch README from {model_url}", logger)
         return None
 
-
 """
 Extract license information from a Hugging Face README.md file.
 Handles both YAML front matter and '## License' sections.
 (The example is a yaml but it says to look for a heading so I added both).
 Doesn't use hugging face API.
 """
-
 
 def extract_license(readme_text: str) -> Optional[str]:
     # Case 1: YAML front matter
@@ -74,18 +70,16 @@ def extract_license(readme_text: str) -> Optional[str]:
 
     return None
 
-
 """
 Calculate license sub-score:
 - 1 if license is present and compatible with LGPL v2.1
 - 0 if not found or incompatible
 """
 
-
 def license_sub_score(model_url: str) -> tuple[int, float]:
     start_time = time.time()
     logger.debug(f"Calculating license sub-score for: {model_url}")
-    
+
     readme = fetch_readme(model_url)
     if not readme:
         logger.warning(f"No README found for {model_url}")
@@ -95,7 +89,7 @@ def license_sub_score(model_url: str) -> tuple[int, float]:
 
     license_str = extract_license(readme)
     logger.debug(f"Extracted license: {license_str}")
-    
+
     if not license_str:
         logger.warning(f"No license found in README for {model_url}")
         end_time = time.time()
@@ -112,12 +106,11 @@ def license_sub_score(model_url: str) -> tuple[int, float]:
             end_time = time.time()
             log_performance("license_sub_score (compatible)", end_time - start_time, logger)
             return (1, end_time - start_time)
-    
+
     logger.info(f"No compatible license found for {model_url} (found: {license_str})")
     end_time = time.time()
     log_performance("license_sub_score (incompatible)", end_time - start_time, logger)
     return (0, end_time - start_time)
-
 
 if __name__ == "__main__":
     url = "https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking"
