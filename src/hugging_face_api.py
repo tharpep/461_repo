@@ -36,7 +36,7 @@ def get_model_info(model_id: str) -> tuple[Optional[Dict[str, Any]], float]:
 
 
 if __name__ == "__main__":
-    model_info, exec_time = get_model_info("microsoft/DialoGPT-medium")
+    model_info, exec_time = get_model_info("gpt2")
     if model_info:
         print(f"Model ID: {model_info.get('id', 'Unknown')}")
         print(f"Execution time: {exec_time:.3f}s")

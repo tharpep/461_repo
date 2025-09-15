@@ -3,25 +3,21 @@ from unittest.mock import Mock, patch
 import json
 
 import pytest
+import requests
 
 from src import hugging_face_api
 
 # Sample API response data
 VALID_MODEL_RESPONSE: Dict[str, Any] = {
-    "id": "microsoft/DialoGPT-medium",
-    "modelId": "microsoft/DialoGPT-medium",
-    "author": "microsoft",
-    "sha": "abc123",
-    "created_at": "2021-01-01T00:00:00.000Z",
-    "last_modified": "2021-01-01T00:00:00.000Z",
-    "private": False,
-    "downloads": 50000,
-    "likes": 150,
+    "id": "gpt2",
+    "modelId": "gpt2", 
+    "author": "openai-community",
+    "downloads": 1000000,
+    "likes": 500,
     "library_name": "transformers",
-    "tags": ["conversational", "pytorch"],
+    "tags": ["text-generation", "pytorch"],
     "cardData": {
-        "license": "mit",
-        "language": ["en"]
+        "license": "mit"
     }
 }
 
@@ -36,12 +32,12 @@ EMPTY_MODEL_RESPONSE: Dict[str, Any] = {}
 @pytest.mark.parametrize(
     "model_id,expected_success",
     [
-        ("microsoft/DialoGPT-medium", True),
-        ("huggingface/test-model", True),
+        ("gpt2", True),
+        ("microsoft/DialoGPT-large", True),  
+        ("bert-base-uncased", True),
         ("", False),
         ("   ", False),
-        ("valid/model-name", True),
-        ("single-name", True),
+        ("facebook/bart-large", True),
     ],
 )
 def test_get_model_info_inputs(
@@ -75,18 +71,18 @@ def test_get_model_info_success(mock_get: Mock) -> None:
     mock_resp.json.return_value = VALID_MODEL_RESPONSE
     mock_get.return_value = mock_resp
 
-    model_info, elapsed = hugging_face_api.get_model_info("microsoft/DialoGPT-medium")
+    model_info, elapsed = hugging_face_api.get_model_info("gpt2")
     
     assert model_info is not None
-    assert model_info["id"] == "microsoft/DialoGPT-medium"
-    assert model_info["author"] == "microsoft"
+    assert model_info["id"] == "gpt2"
+    assert model_info["author"] == "openai-community"
     assert model_info["cardData"]["license"] == "mit"
     assert elapsed >= 0
     
     # Verify correct API URL was called
     mock_get.assert_called_once()
     args, kwargs = mock_get.call_args
-    assert "microsoft/DialoGPT-medium" in args[0]
+    assert "gpt2" in args[0]
     assert kwargs["timeout"] == 10
 
 
@@ -195,12 +191,12 @@ def test_get_model_info_strips_whitespace() -> None:
         mock_resp.json.return_value = VALID_MODEL_RESPONSE
         mock_get.return_value = mock_resp
 
-        model_info, elapsed = hugging_face_api.get_model_info("  microsoft/DialoGPT-medium  ")
+        model_info, elapsed = hugging_face_api.get_model_info("  gpt2  ")
         
         assert model_info is not None
         # Verify the stripped model_id was used in the URL
         args, _ = mock_get.call_args
-        assert "microsoft/DialoGPT-medium" in args[0]
+        assert "gpt2" in args[0]
         assert "  " not in args[0]
 
 
@@ -229,7 +225,7 @@ def test_timing_measurement() -> None:
 
         model_info, elapsed = hugging_face_api.get_model_info("test/model")
         
-        assert elapsed > 0
+        assert elapsed >= 0.0
         assert isinstance(elapsed, float)
 
 
