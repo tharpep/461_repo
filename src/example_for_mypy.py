@@ -1,6 +1,7 @@
-from schema import ProjectMetadata
+from src import schema
+from src.schema import ProjectMetadata
 
-project: ProjectMetadata = {
+project: schema.ProjectMetadata = {
     "name": "Example Project",
     "category": "MODEL",
     "net_score": 0.85,

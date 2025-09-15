@@ -1,0 +1,10 @@
+2025-09-14 16:36:08,561 - error_handling.errors - WARNING - Medium severity error: [4001] Model ID must contain a forward slash (author/model-name format) | Severity: medium | Context: field_name=model_id, actual_value=invalid-format | Suggestion: Use format 'author/model-name'
+2025-09-14 16:36:08,561 - error_handling.errors - WARNING - Medium severity error: [2001] Simulated model not found | Severity: medium | Context: model_id=error
+2025-09-14 16:36:08,561 - error_handling.error_handlers - WARNING - Error in risky_function: [2001] Simulated model not found | Severity: medium | Context: model_id=error. Using fallback.
+2025-09-14 16:36:08,561 - error_handling.errors - WARNING - Medium severity error: [2002] Attempt 1 failed | Severity: medium
+2025-09-14 16:36:08,561 - error_handling.errors - WARNING - Medium severity error: [4001] Model ID must contain a forward slash (author/model-name format) | Severity: medium | Context: field_name=model_id, actual_value=invalid | Suggestion: Use format 'author/model-name'
+2025-09-14 16:36:08,561 - error_handling.error_handlers - WARNING - Error handled: [4001] Model ID must contain a forward slash (author/model-name format) | Severity: medium | Context: field_name=model_id, actual_value=invalid | Suggestion: Use format 'author/model-name'
+2025-09-14 16:36:08,561 - error_handling.error_handlers - WARNING - Error in safe_execute for risky_function: Simulated error
+2025-09-14 16:36:08,561 - error_handling.errors - WARNING - Medium severity error: [4001] Invalid model ID | Severity: medium
+2025-09-14 16:36:08,561 - error_handling.errors - ERROR - High severity error: [2001] Model not found | Severity: high
+2025-09-14 16:36:08,561 - error_handling.errors - INFO - Low severity error: [4002] Invalid input | Severity: low
