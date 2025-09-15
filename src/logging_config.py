@@ -49,7 +49,9 @@ class LoggingConfig:
         level_str = os.getenv(env_var, default).upper()
         return getattr(logging, level_str, logging.INFO)
 
-    def get_formatter(self, format_type: str = "detailed") -> logging.Formatter:
+    def get_formatter(
+        self, format_type: str = "detailed"
+    ) -> logging.Formatter:
         """Get appropriate formatter based on type."""
         if format_type == "simple":
             return logging.Formatter(
