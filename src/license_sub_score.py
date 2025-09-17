@@ -20,6 +20,8 @@ COMPATIBLE_LICENSES = {
 Fetch the README.md text from a Hugging Face model repository. Uses the
 model ID (e.g., "baidu/ERNIE-4.5-21B-A3B-Thinking").
 """
+
+
 def fetch_readme(model_id: str) -> Optional[str]:
     # Construct raw README URL from model ID
     raw_url = f"https://huggingface.co/{model_id}/resolve/main/README.md"
@@ -37,6 +39,8 @@ def fetch_readme(model_id: str) -> Optional[str]:
 Extract license information from a Hugging Face README.md file.
 Handles both YAML front matter and '## License' sections.
 """
+
+
 def extract_license(readme_text: str) -> Optional[str]:
     # Case 1: YAML front matter
     yaml_match = re.search(r"^---[\s\S]*?license:\s*([^\n]+)",
@@ -61,6 +65,8 @@ Calculate license sub-score:
 - 0 if not found or incompatible
 Input: model_id (e.g., "baidu/ERNIE-4.5-21B-A3B-Thinking")
 """
+
+
 def license_sub_score(model_id: str) -> tuple[int, float]:
     start_time = time.time()
     readme = fetch_readme(model_id)

@@ -1,9 +1,10 @@
+import math
 import time
 from typing import Tuple
+
 from hugging_face_api import get_model_info
 from license_sub_score import fetch_readme
 
-import math
 
 def normalize_sigmoid(value: int, mid: int, steepness: float) -> float:
     """
@@ -16,6 +17,7 @@ def normalize_sigmoid(value: int, mid: int, steepness: float) -> float:
     score = 1 / (1 + math.exp(-steepness * (value - mid)))
     return min(1.0, score)
 
+
 def ramp_up_time_score(model_id: str) -> Tuple[float, float]:
     """
     Scores ramp up time based on:
@@ -26,7 +28,7 @@ def ramp_up_time_score(model_id: str) -> Tuple[float, float]:
     Returns (score, elapsed_time)
     """
     start = time.time()
-    score = 0
+    score = 0.0
 
     # Get model info from Hugging Face API
     info, _ = get_model_info(model_id)
@@ -34,10 +36,12 @@ def ramp_up_time_score(model_id: str) -> Tuple[float, float]:
         return 0.0, time.time() - start
 
     # 1. Downloads
-    score += normalize_sigmoid(info.get("downloads", 0), mid=10000, steepness=0.0001)
+    score += normalize_sigmoid(value=info.get("downloads", 0),
+                               mid=10000, steepness=0.0001)
 
     # 2. Likes
-    score += normalize_sigmoid(info.get("likes", 0), mid=100, steepness=0.01)
+    score += normalize_sigmoid(value=info.get("likes", 0), mid=100,
+                               steepness=0.01)
 
     # 3. README exists
     readme = fetch_readme(model_id)
@@ -51,6 +55,7 @@ def ramp_up_time_score(model_id: str) -> Tuple[float, float]:
     # Normalize (max score is 4)
     normalized = score / 4
     return normalized, time.time() - start
+
 
 if __name__ == "__main__":
     model_id = "google/gemma-2b"
