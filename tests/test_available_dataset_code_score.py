@@ -1,17 +1,16 @@
 import os
 import sys
 import unittest
-from typing import Optional
 from unittest.mock import Mock, patch
 
 # Add the src directory to the path so we can import the module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from available_dataset_code_score import (
-    available_dataset_code_score,
-    detect_code_examples,
-    detect_dataset_links,
-)
+# Import after path modification
+from available_dataset_code_score import \
+    available_dataset_code_score  # noqa: E402
+from available_dataset_code_score import detect_code_examples  # noqa: E402
+from available_dataset_code_score import detect_dataset_links  # noqa: E402
 
 # Test data for different README scenarios
 README_EMPTY = ""
@@ -459,13 +458,14 @@ class TestAvailableDatasetCodeScore(unittest.TestCase):
             score, elapsed = available_dataset_code_score("test-model")
             self.assertEqual(score, 1.0)
             self.assertGreaterEqual(elapsed, 0)
-            self.assertLess(elapsed, 1.0)  # Should be very fast with mocked function
+            # Should be very fast with mocked function
+            self.assertLess(elapsed, 1.0)
 
     @patch('os.getenv')
     def test_score_logging(self, mock_getenv: Mock) -> None:
         """Test that logging works when LOG_LEVEL is set."""
         mock_getenv.return_value = "1"
-        
+
         with patch('available_dataset_code_score.fetch_readme') as mock_fetch:
             mock_fetch.return_value = None
             # This should not raise an exception even with logging enabled
@@ -479,8 +479,9 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_very_long_readme(self) -> None:
         """Test with a very long README."""
-        long_readme = "A" * 10000 + "\n## Dataset\nhttps://example.com/data.csv\n" + "B" * 10000
-        
+        long_readme = ("A" * 10000 + "\n## Dataset\nhttps://example.com/"
+                       "data.csv\n" + "B" * 10000)
+
         with patch('available_dataset_code_score.fetch_readme') as mock_fetch:
             mock_fetch.return_value = long_readme
             score, elapsed = available_dataset_code_score("test-model")
@@ -493,14 +494,14 @@ class TestEdgeCases(unittest.TestCase):
         # 模型名称
         ## 数据集
         https://example.com/数据.csv
-        
+
         ## 使用
         ```python
         import torch
         model = torch.load('模型.pth')
         ```
         """
-        
+
         with patch('available_dataset_code_score.fetch_readme') as mock_fetch:
             mock_fetch.return_value = unicode_readme
             score, elapsed = available_dataset_code_score("test-model")
@@ -513,14 +514,14 @@ class TestEdgeCases(unittest.TestCase):
         # My Model
         <h2>Dataset</h2>
         <a href="https://example.com/data.csv">Download data</a>
-        
+
         <h2>Code</h2>
         <pre><code>
         import torch
         model = torch.load('model.pth')
         </code></pre>
         """
-        
+
         with patch('available_dataset_code_score.fetch_readme') as mock_fetch:
             mock_fetch.return_value = html_readme
             score, elapsed = available_dataset_code_score("test-model")
@@ -533,18 +534,19 @@ class TestEdgeCases(unittest.TestCase):
         # My Model
         ## DATASET
         https://example.com/DATA.CSV
-        
+
         ## USAGE
         ```PYTHON
         import torch
         model = torch.load('model.pth')
         ```
         """
-        
+
         with patch('available_dataset_code_score.fetch_readme') as mock_fetch:
             mock_fetch.return_value = case_readme
             score, elapsed = available_dataset_code_score("test-model")
-            self.assertEqual(score, 1.0)  # Should detect both despite case differences
+            # Should detect both despite case differences
+            self.assertEqual(score, 1.0)
             self.assertGreaterEqual(elapsed, 0)
 
 
