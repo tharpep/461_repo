@@ -1,0 +1,4 @@
+2025-09-14 20:57:41 - src.hugging_face_api - DEBUG - hugging_face_api.py:23 - Fetching model info for: microsoft/DialoGPT-medium
+2025-09-14 20:57:41 - src.hugging_face_api - DEBUG - hugging_face_api.py:32 - API URL: https://huggingface.co/api/models/microsoft/DialoGPT-medium
+2025-09-14 20:57:42 - src.hugging_face_api - INFO - hugging_face_api.py:39 - Successfully fetched model info for microsoft/DialoGPT-medium
+2025-09-14 20:57:42 - src.hugging_face_api - INFO - logging_config.py:226 - Performance: get_model_info completed in 0.185s

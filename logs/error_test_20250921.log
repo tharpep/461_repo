@@ -1,0 +1,5 @@
+2025-09-21 19:32:19 - error_test - ERROR - logging_config.py:256 - Error in test_context: Test error
+Traceback (most recent call last):
+  File "/Users/shaansriram/Desktop/461_repo_shaan/test_logging_simple.py", line 107, in test_error_logging
+    raise ValueError("Test error")
+ValueError: Test error
