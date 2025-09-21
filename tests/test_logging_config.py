@@ -15,6 +15,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -27,17 +28,17 @@ from src.logging_config import (LoggerManager, LoggingConfig, get_logger,
 class TestLoggingConfig:
     """Test LoggingConfig class functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.config = LoggingConfig()
         self.config.log_dir = Path(self.temp_dir)
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_log_level_from_env(self):
+    def test_log_level_from_env(self) -> None:
         """Test log level extraction from environment variables."""
         with patch.dict(os.environ, {'CONSOLE_LOG_LEVEL': 'DEBUG'}):
             config = LoggingConfig()
@@ -47,24 +48,24 @@ class TestLoggingConfig:
             config = LoggingConfig()
             assert config.console_level == logging.ERROR
 
-    def test_get_formatter_simple(self):
+    def test_get_formatter_simple(self) -> None:
         """Test simple formatter creation."""
         formatter = self.config.get_formatter("simple")
         assert isinstance(formatter, logging.Formatter)
-        assert "%(asctime)s" in formatter._fmt
+        assert formatter._fmt is not None and "%(asctime)s" in formatter._fmt
 
-    def test_get_formatter_detailed(self):
+    def test_get_formatter_detailed(self) -> None:
         """Test detailed formatter creation."""
         formatter = self.config.get_formatter("detailed")
         assert isinstance(formatter, logging.Formatter)
-        assert "%(filename)s" in formatter._fmt
+        assert formatter._fmt is not None and "%(filename)s" in formatter._fmt
 
-    def test_get_formatter_json(self):
+    def test_get_formatter_json(self) -> None:
         """Test JSON formatter creation."""
         formatter = self.config.get_formatter("json")
         assert hasattr(formatter, 'format')
 
-    def test_setup_logger(self):
+    def test_setup_logger(self) -> None:
         """Test logger setup with handlers."""
         logger = self.config.setup_logger("test_logger")
 
@@ -87,27 +88,27 @@ class TestLoggingConfig:
 class TestLoggerManager:
     """Test LoggerManager singleton functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         # Reset singleton
         LoggerManager._instance = None
         LoggerManager._loggers = {}
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
         # Reset singleton
         LoggerManager._instance = None
         LoggerManager._loggers = {}
 
-    def test_singleton_behavior(self):
+    def test_singleton_behavior(self) -> None:
         """Test that LoggerManager is a singleton."""
         manager1 = LoggerManager()
         manager2 = LoggerManager()
         assert manager1 is manager2
 
-    def test_get_logger_creation(self):
+    def test_get_logger_creation(self) -> None:
         """Test logger creation and retrieval."""
         manager = LoggerManager()
         logger = manager.get_logger("test_module")
@@ -116,7 +117,7 @@ class TestLoggerManager:
         assert logger.name == "test_module"
         assert "test_module" in manager._loggers
 
-    def test_get_logger_caching(self):
+    def test_get_logger_caching(self) -> None:
         """Test that loggers are cached and reused."""
         manager = LoggerManager()
         logger1 = manager.get_logger("test_module")
@@ -128,27 +129,27 @@ class TestLoggerManager:
 class TestLoggingUtilities:
     """Test utility functions for logging."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         # Reset singleton
         LoggerManager._instance = None
         LoggerManager._loggers = {}
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
         # Reset singleton
         LoggerManager._instance = None
         LoggerManager._loggers = {}
 
-    def test_get_logger_function(self):
+    def test_get_logger_function(self) -> None:
         """Test get_logger utility function."""
         logger = get_logger("test_module")
         assert isinstance(logger, logging.Logger)
         assert logger.name == "test_module"
 
-    def test_set_log_level(self):
+    def test_set_log_level(self) -> None:
         """Test set_log_level function."""
         logger = get_logger("test_module")
         set_log_level("ERROR")
@@ -159,7 +160,7 @@ class TestLoggingUtilities:
             if isinstance(h, logging.StreamHandler))
         assert console_handler.level == logging.ERROR
 
-    def test_log_performance(self, caplog):
+    def test_log_performance(self, caplog: Any) -> None:
         """Test performance logging function."""
         logger = get_logger("test_module")
 
@@ -168,7 +169,7 @@ class TestLoggingUtilities:
 
         assert "Performance: test_operation completed in 1.234s" in caplog.text
 
-    def test_log_error_with_context(self, caplog):
+    def test_log_error_with_context(self, caplog: Any) -> None:
         """Test error logging with context."""
         logger = get_logger("test_module")
         error = ValueError("Test error")
@@ -178,7 +179,7 @@ class TestLoggingUtilities:
 
         assert "Error in test_context: Test error" in caplog.text
 
-    def test_log_function_call(self, caplog):
+    def test_log_function_call(self, caplog: Any) -> None:
         """Test function call logging."""
         logger = get_logger("test_module")
 
@@ -192,18 +193,18 @@ class TestLoggingUtilities:
 class TestLogRotation:
     """Test log file rotation functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.config = LoggingConfig()
         self.config.log_dir = Path(self.temp_dir)
         self.config.max_file_size = 100  # Small size for testing
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_log_rotation_setup(self):
+    def test_log_rotation_setup(self) -> None:
         """Test that log rotation is properly configured."""
         logger = self.config.setup_logger("rotation_test")
 
@@ -218,15 +219,15 @@ class TestLogRotation:
 class TestEnvironmentConfiguration:
     """Test environment variable configuration."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_environment_variables(self):
+    def test_environment_variables(self) -> None:
         """Test configuration from environment variables."""
         env_vars = {
             'CONSOLE_LOG_LEVEL': 'WARNING',
@@ -250,7 +251,7 @@ class TestEnvironmentConfiguration:
 class TestJsonFormatter:
     """Test JSON formatter functionality."""
 
-    def test_json_formatting(self):
+    def test_json_formatting(self) -> None:
         """Test JSON log record formatting."""
         from src.logging_config import JsonFormatter
 

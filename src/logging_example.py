@@ -11,7 +11,7 @@ from .logging_config import (get_logger, log_error_with_context,
                              log_performance, set_log_level)
 
 
-def example_function():
+def example_function() -> None:
     """Example function demonstrating logging usage."""
     # Get a logger for this module
     logger = get_logger(__name__)
@@ -35,7 +35,7 @@ def example_function():
         log_error_with_context(e, "example_function", logger)
 
 
-def example_with_correlation_id():
+def example_with_correlation_id() -> None:
     """Example using correlation ID for request tracing."""
     # Get logger with correlation ID
     correlation_id = "req_12345"
@@ -47,7 +47,7 @@ def example_with_correlation_id():
     # All subsequent log messages will include the correlation ID
 
 
-def example_environment_configuration():
+def example_environment_configuration() -> None:
     """Example showing environment variable configuration."""
     import os
 

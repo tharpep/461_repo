@@ -31,7 +31,7 @@ class LogLevel(Enum):
 class LoggingConfig:
     """Centralized logging configuration manager."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.log_dir = Path("logs")
         self.log_dir.mkdir(exist_ok=True)
 
@@ -101,7 +101,7 @@ class LoggingConfig:
         # Add correlation ID to log records if provided
         if correlation_id:
 
-            def record_factory(*args, **kwargs):
+            def record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
                 record = old_factory(*args, **kwargs)
                 record.correlation_id = correlation_id
                 return record
@@ -140,10 +140,11 @@ class JsonFormatter(logging.Formatter):
 class LoggerManager:
     """Singleton logger manager to ensure consistent logging."""
 
-    _instance = None
+    _instance: Optional["LoggerManager"] = None
     _loggers: Dict[str, logging.Logger] = {}
+    _config: LoggingConfig
 
-    def __new__(cls):
+    def __new__(cls) -> "LoggerManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._config = LoggingConfig()
@@ -160,7 +161,7 @@ class LoggerManager:
     def set_correlation_id(self, correlation_id: str) -> None:
         """Set correlation ID for all future log records."""
 
-        def record_factory(*args, **kwargs):
+        def record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
             record = old_factory(*args, **kwargs)
             record.correlation_id = correlation_id
             return record
@@ -204,7 +205,7 @@ def set_log_level(level: str) -> None:
                 handler.setLevel(level_int)
 
 
-def log_function_call(func_name: str, args: Dict[str, Any] = None,
+def log_function_call(func_name: str, args: Optional[Dict[str, Any]] = None,
                       logger: Optional[logging.Logger] = None) -> None:
     """
     Log function call with arguments for debugging.
