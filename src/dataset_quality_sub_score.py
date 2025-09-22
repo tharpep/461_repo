@@ -61,16 +61,28 @@ def check_example_scripts(readme_text: Optional[str]) -> bool:
     if '```' in readme_text:
         return True
     
-    # Look for example keywords
+    # Look for example keywords with word boundaries and context
+    # Skip if "example" appears only in titles/headers
+    readme_lower = readme_text.lower()
+    
+    # Check for code-related keywords that indicate examples
     example_keywords = [
-        'example', 'usage', 'demo', 'tutorial', 'how to use',
-        'quick start', 'getting started', 'sample code'
+        r'\busage\b', r'\bdemo\b', r'\btutorial\b', 
+        r'how to use', r'quick start', r'getting started', r'sample code'
     ]
     
-    readme_lower = readme_text.lower()
     for keyword in example_keywords:
-        if keyword in readme_lower:
+        if re.search(keyword, readme_lower):
             return True
+    
+    # Check for "example" but not in titles/headers
+    if re.search(r'\bexample\b', readme_lower):
+        # Check if it's not just in a title (lines starting with #)
+        lines = readme_text.split('\n')
+        for line in lines:
+            line_lower = line.lower().strip()
+            if re.search(r'\bexample\b', line_lower) and not line_lower.startswith('#'):
+                return True
     
     return False
 
