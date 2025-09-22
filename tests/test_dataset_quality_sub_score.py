@@ -122,7 +122,7 @@ class TestDocumentationEvaluation:
 
     def test_evaluate_dataset_documentation_comprehensive(
         self
-    ) -> None:  # type: ignore
+    ) -> None:
         """Test comprehensive documentation scoring."""
         score = dataset_quality.evaluate_dataset_documentation(
             README_WITH_DOCUMENTATION
