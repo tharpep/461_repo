@@ -5,88 +5,6 @@ from typing import Optional, Tuple
 from src.license_sub_score import fetch_readme
 
 
-def check_dataset_links(readme_text: Optional[str]) -> bool:
-    """
-    Check if README contains dataset links.
-    Looks for common dataset hosting patterns and URLs.
-    
-    Args:
-        readme_text: The README content as string
-        
-    Returns:
-        bool: True if dataset links are found, False otherwise
-    """
-    if not readme_text:
-        return False
-    
-    # Common dataset hosting patterns
-    dataset_patterns = [
-        r'https?://[^\s]+\.csv',
-        r'https?://[^\s]+\.json',
-        r'https?://[^\s]+\.jsonl',
-        r'https?://[^\s]+\.parquet',
-        r'https?://[^\s]+\.tsv',
-        r'https?://[^\s]+\.txt',
-        r'https?://[^\s]*dataset[^\s]*',
-        r'https?://[^\s]*data[^\s]*',
-        r'https?://huggingface\.co/datasets/[^\s]+',
-        r'https?://[^\s]*kaggle[^\s]*',
-        r'https?://[^\s]*drive\.google[^\s]*',
-        r'https?://[^\s]*dropbox[^\s]*',
-        r'https?://[^\s]*github[^\s]*/.*\.csv',
-        r'https?://[^\s]*github[^\s]*/.*\.json',
-    ]
-    
-    for pattern in dataset_patterns:
-        if re.search(pattern, readme_text, re.IGNORECASE):
-            return True
-    
-    return False
-
-
-def check_example_scripts(readme_text: Optional[str]) -> bool:
-    """
-    Check if README contains example scripts or code snippets.
-    
-    Args:
-        readme_text: The README content as string
-        
-    Returns:
-        bool: True if example scripts are found, False otherwise
-    """
-    if not readme_text:
-        return False
-    
-    # Look for code blocks
-    if '```' in readme_text:
-        return True
-    
-    # Look for example keywords with word boundaries and context
-    # Skip if "example" appears only in titles/headers
-    readme_lower = readme_text.lower()
-    
-    # Check for code-related keywords that indicate examples
-    example_keywords = [
-        r'\busage\b', r'\bdemo\b', r'\btutorial\b', 
-        r'how to use', r'quick start', r'getting started', r'sample code'
-    ]
-    
-    for keyword in example_keywords:
-        if re.search(keyword, readme_lower):
-            return True
-    
-    # Check for "example" but not in titles/headers
-    if re.search(r'\bexample\b', readme_lower):
-        # Check if it's not just in a title (lines starting with #)
-        lines = readme_text.split('\n')
-        for line in lines:
-            line_lower = line.lower().strip()
-            if re.search(r'\bexample\b', line_lower) and not line_lower.startswith('#'):
-                return True
-    
-    return False
-
-
 def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
     """
     Evaluate dataset documentation quality based on README content.
@@ -103,17 +21,26 @@ def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
     score = 0.0
     readme_lower = readme_text.lower()
     
-    # Check for dataset description (0.2 points)
-    if any(keyword in readme_lower for keyword in ['dataset', 'data', 'training data']):
-        score += 0.2
+    # Check for dataset description (0.2 points) - more specific with word boundaries
+    dataset_patterns = [
+        r'\bdataset\b', r'\btraining data\b', r'\btraining set\b', 
+        r'\bdata set\b', r'\bcorpus\b', r'\bcollection\b', r'\bspecification\b'
+    ]
     
-    # Check for size information (0.2 points)
+    for pattern in dataset_patterns:
+        if re.search(pattern, readme_lower):
+            score += 0.2
+            break
+    
+    # Check for size information (0.2 points) - enhanced patterns
     size_patterns = [
         r'\d+\s*(gb|mb|kb|tb)',
         r'\d+\s*(gigabytes?|megabytes?|kilobytes?|terabytes?)',
         r'\d+\s*rows?',
         r'\d+\s*samples?',
         r'\d+\s*examples?',
+        r'\d+\s*instances?',
+        r'\d+\s*records?',
         r'size[:\s]+\d+',
         r'contains?\s+\d+'
     ]
@@ -123,17 +50,30 @@ def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
             score += 0.2
             break
     
-    # Check for format information (0.2 points)
-    format_keywords = ['csv', 'json', 'jsonl', 'parquet', 'tsv', 'txt', 'format', 'structure']
+    # Check for format information (0.2 points) - more comprehensive
+    format_keywords = [
+        'csv', 'json', 'jsonl', 'parquet', 'tsv', 'txt', 'hdf5', 'feather',
+        'format', 'structure', 'file format', 'data format'
+    ]
     if any(keyword in readme_lower for keyword in format_keywords):
         score += 0.2
     
-    # Check for column/field descriptions (0.2 points)
-    if any(keyword in readme_lower for keyword in ['column', 'field', 'attribute', 'feature', 'schema']):
-        score += 0.2
+    # Check for column/field descriptions (0.2 points) - with word boundaries
+    schema_patterns = [
+        r'\bcolumn\b', r'\bfield\b', r'\battribute\b', r'\bfeature\b', 
+        r'\bschema\b', r'\bmetadata\b', r'\bannotation\b', r'\blabel\b'
+    ]
     
-    # Check for usage instructions (0.2 points)
-    usage_keywords = ['usage', 'how to', 'load', 'download', 'access', 'install']
+    for pattern in schema_patterns:
+        if re.search(pattern, readme_lower):
+            score += 0.2
+            break
+    
+    # Check for usage instructions (0.2 points) - more comprehensive
+    usage_keywords = [
+        'usage', 'how to', 'load', 'download', 'access', 'install',
+        'tutorial', 'guide', 'example', 'quickstart', 'getting started'
+    ]
     if any(keyword in readme_lower for keyword in usage_keywords):
         score += 0.2
     
@@ -142,7 +82,7 @@ def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
 
 def evaluate_license_clarity(readme_text: Optional[str]) -> float:
     """
-    Evaluate license clarity for the dataset.
+    Evaluate license clarity for the dataset (different from license compatibility).
     
     Args:
         readme_text: The README content as string
@@ -156,15 +96,19 @@ def evaluate_license_clarity(readme_text: Optional[str]) -> float:
     score = 0.0
     readme_lower = readme_text.lower()
     
-    # Check for explicit license mention (0.5 points)
-    license_keywords = ['license', 'licence', 'terms', 'agreement', 'permission']
+    # Check for explicit license mention (0.5 points) - more comprehensive
+    license_keywords = [
+        'license', 'licence', 'terms', 'agreement', 'permission',
+        'copyright', 'legal', 'rights', 'usage rights'
+    ]
     if any(keyword in readme_lower for keyword in license_keywords):
         score += 0.5
     
-    # Check for specific license types (0.3 points)
+    # Check for specific license types (0.3 points) - more comprehensive
     specific_licenses = [
         'mit', 'apache', 'gpl', 'lgpl', 'bsd', 'cc0', 'cc-by', 'public domain',
-        'open source', 'free to use', 'commercial use', 'academic use'
+        'open source', 'free to use', 'commercial use', 'academic use',
+        'creative commons', 'attribution', 'redistribution'
     ]
     
     for license_type in specific_licenses:
@@ -172,8 +116,11 @@ def evaluate_license_clarity(readme_text: Optional[str]) -> float:
             score += 0.3
             break
     
-    # Check for usage restrictions (0.2 points)
-    restriction_keywords = ['restriction', 'limitation', 'prohibited', 'not allowed', 'forbidden']
+    # Check for usage restrictions (0.2 points) - more comprehensive
+    restriction_keywords = [
+        'restriction', 'limitation', 'prohibited', 'not allowed', 'forbidden',
+        'cannot', 'must not', 'restricted use'
+    ]
     if any(keyword in readme_lower for keyword in restriction_keywords):
         score += 0.2
     
@@ -196,26 +143,32 @@ def evaluate_safety_privacy(readme_text: Optional[str]) -> float:
     score = 0.0
     readme_lower = readme_text.lower()
     
-    # Check for privacy considerations (0.4 points)
+    # Check for privacy considerations (0.4 points) - more comprehensive
     privacy_keywords = [
         'privacy', 'personal', 'pii', 'anonymized', 'anonymised', 'de-identified',
-        'confidential', 'sensitive', 'data protection', 'gdpr', 'ccpa'
+        'confidential', 'sensitive', 'data protection', 'gdpr', 'ccpa',
+        'personal information', 'private data', 'data privacy'
     ]
     
     if any(keyword in readme_lower for keyword in privacy_keywords):
         score += 0.4
     
-    # Check for safety considerations (0.3 points)
+    # Check for safety considerations (0.3 points) - more comprehensive
     safety_keywords = [
         'safety', 'bias', 'fairness', 'ethical', 'responsible', 'harmful',
-        'content warning', 'disclaimer', 'risks', 'limitations'
+        'content warning', 'disclaimer', 'risks', 'limitations',
+        'toxicity', 'hate speech', 'inappropriate', 'offensive content',
+        'safety guidelines', 'ethical considerations'
     ]
     
     if any(keyword in readme_lower for keyword in safety_keywords):
         score += 0.3
     
-    # Check for data source information (0.3 points)
-    source_keywords = ['source', 'origin', 'collected', 'gathered', 'obtained', 'derived']
+    # Check for data source information (0.3 points) - more comprehensive
+    source_keywords = [
+        'source', 'origin', 'collected', 'gathered', 'obtained', 'derived',
+        'data source', 'origin of data', 'data collection', 'data gathering'
+    ]
     if any(keyword in readme_lower for keyword in source_keywords):
         score += 0.3
     
@@ -238,22 +191,32 @@ def evaluate_curation_quality(readme_text: Optional[str]) -> float:
     score = 0.0
     readme_lower = readme_text.lower()
     
-    # Check for quality control measures (0.4 points)
-    quality_keywords = [
-        'quality', 'curated', 'verified', 'validated', 'checked', 'reviewed',
-        'filtered', 'cleaned', 'processed', 'preprocessed'
+    # Check for quality control measures (0.4 points) - with word boundaries
+    quality_patterns = [
+        r'\bquality\b', r'\bcurated\b', r'\bverified\b', r'\bvalidated\b', 
+        r'\bchecked\b', r'\breviewed\b', r'\bfiltered\b', r'\bcleaned\b', 
+        r'\bprocessed\b', r'\bpreprocessed\b', r'\bstandardized\b', r'\bnormalized\b'
     ]
     
-    if any(keyword in readme_lower for keyword in quality_keywords):
-        score += 0.4
+    for pattern in quality_patterns:
+        if re.search(pattern, readme_lower):
+            score += 0.4
+            break
     
-    # Check for version information (0.3 points)
-    version_keywords = ['version', 'v1', 'v2', 'update', 'changelog', 'release']
+    # Check for version information (0.3 points) - more comprehensive
+    version_keywords = [
+        'version', 'v1', 'v2', 'v3', 'update', 'changelog', 'release',
+        'revision', 'iteration', 'edition', 'dataset version'
+    ]
     if any(keyword in readme_lower for keyword in version_keywords):
         score += 0.3
     
-    # Check for statistics or metrics (0.3 points)
-    stats_keywords = ['accuracy', 'precision', 'recall', 'f1', 'bleu', 'rouge', 'metric', 'statistic']
+    # Check for statistics or metrics (0.3 points) - more comprehensive
+    stats_keywords = [
+        'accuracy', 'precision', 'recall', 'f1', 'bleu', 'rouge', 
+        'metric', 'statistic', 'benchmark', 'baseline', 'performance',
+        'evaluation', 'assessment', 'measurement'
+    ]
     if any(keyword in readme_lower for keyword in stats_keywords):
         score += 0.3
     
@@ -276,20 +239,27 @@ def evaluate_reproducibility(readme_text: Optional[str]) -> float:
     score = 0.0
     readme_lower = readme_text.lower()
     
-    # Check for code availability (0.3 points)
-    code_keywords = ['code', 'github', 'repository', 'script', 'notebook', 'jupyter']
+    # Check for code availability (0.3 points) - more comprehensive
+    code_keywords = [
+        'code', 'github', 'repository', 'script', 'notebook', 'jupyter',
+        'source code', 'implementation', 'codebase', 'repository'
+    ]
     if any(keyword in readme_lower for keyword in code_keywords):
         score += 0.3
     
-    # Check for environment setup (0.3 points)
-    env_keywords = ['environment', 'requirements', 'dependencies', 'install', 'setup', 'docker']
+    # Check for environment setup (0.3 points) - more comprehensive
+    env_keywords = [
+        'environment', 'requirements', 'dependencies', 'install', 'setup', 'docker',
+        'conda', 'pip', 'package', 'library', 'framework', 'configuration'
+    ]
     if any(keyword in readme_lower for keyword in env_keywords):
         score += 0.3
     
-    # Check for reproducibility instructions (0.4 points)
+    # Check for reproducibility instructions (0.4 points) - more comprehensive
     repro_keywords = [
         'reproduce', 'reproducibility', 'replicate', 'replication', 'recreate',
-        'step by step', 'instructions', 'tutorial', 'guide'
+        'step by step', 'instructions', 'tutorial', 'guide', 'experiment',
+        'reproduce results', 'replication study'
     ]
     
     if any(keyword in readme_lower for keyword in repro_keywords):
@@ -302,13 +272,12 @@ def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
     """
     Calculate dataset quality sub-score based on README analysis.
     
-    Evaluates:
-    - Available dataset and code (0.2 weight)
-    - Dataset documentation quality (0.2 weight)
-    - License clarity (0.2 weight)
+    Evaluates the 5 criteria from the dataset quality requirements:
+    - Documentation of the dataset (0.2 weight)
+    - Clarity of the license (0.2 weight)
     - Safety/privacy considerations (0.2 weight)
-    - Curation/quality control (0.1 weight)
-    - Reproducibility (0.1 weight)
+    - Curation/quality control measures (0.2 weight)
+    - Reproducibility (0.2 weight)
     
     Args:
         model_id: The Hugging Face model ID
@@ -324,27 +293,20 @@ def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
         end_time = time.time()
         return (0.0, end_time - start_time)
     
-    # Calculate individual scores
-    available_score = 0.0
-    if check_dataset_links(readme):
-        available_score += 0.5
-    if check_example_scripts(readme):
-        available_score += 0.5
-    
+    # Calculate all 5 dataset quality scores
     doc_score = evaluate_dataset_documentation(readme)
     license_score = evaluate_license_clarity(readme)
     safety_score = evaluate_safety_privacy(readme)
     curation_score = evaluate_curation_quality(readme)
     repro_score = evaluate_reproducibility(readme)
     
-    # Weighted combination
+    # Equal weighted combination (0.2 each for the 5 criteria)
     final_score = (
-        available_score * 0.2 +
         doc_score * 0.2 +
         license_score * 0.2 +
         safety_score * 0.2 +
-        curation_score * 0.1 +
-        repro_score * 0.1
+        curation_score * 0.2 +
+        repro_score * 0.2
     )
     
     end_time = time.time()

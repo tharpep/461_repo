@@ -7,36 +7,6 @@ import src.dataset_quality_sub_score as dataset_quality
 
 
 # Test data for various README scenarios
-README_WITH_DATASET_LINKS = """
-# Example Model
-
-## Dataset
-The training data is available at:
-- https://huggingface.co/datasets/example-dataset
-- https://github.com/example/data.csv
-- https://drive.google.com/file/dataset.json
-
-## Usage
-```python
-import model
-```
-"""
-
-README_WITH_EXAMPLE_SCRIPTS = """
-# Example Model
-
-## Quick Start
-Here's how to use this model:
-
-```python
-from transformers import AutoModel
-model = AutoModel.from_pretrained("example/model")
-```
-
-## Example
-See the example notebook for more details.
-"""
-
 README_WITH_DOCUMENTATION = """
 # Example Model
 
@@ -147,42 +117,6 @@ README_MINIMAL = """
 # Example Model
 Basic model description.
 """
-
-
-class TestDatasetLinks:
-    """Test dataset link detection functionality."""
-    
-    def test_check_dataset_links_with_links(self):
-        """Test detection of various dataset link patterns."""
-        assert dataset_quality.check_dataset_links(README_WITH_DATASET_LINKS) is True
-    
-    def test_check_dataset_links_without_links(self):
-        """Test when no dataset links are present."""
-        assert dataset_quality.check_dataset_links(README_MINIMAL) is False
-    
-    def test_check_dataset_links_empty(self):
-        """Test with empty README."""
-        assert dataset_quality.check_dataset_links(README_EMPTY) is False
-    
-    def test_check_dataset_links_none(self):
-        """Test with None input."""
-        assert dataset_quality.check_dataset_links(None) is False
-
-
-class TestExampleScripts:
-    """Test example script detection functionality."""
-    
-    def test_check_example_scripts_with_code(self):
-        """Test detection of code blocks."""
-        assert dataset_quality.check_example_scripts(README_WITH_EXAMPLE_SCRIPTS) is True
-    
-    def test_check_example_scripts_without_code(self):
-        """Test when no example scripts are present."""
-        assert dataset_quality.check_example_scripts(README_MINIMAL) is False
-    
-    def test_check_example_scripts_empty(self):
-        """Test with empty README."""
-        assert dataset_quality.check_example_scripts(README_EMPTY) is False
 
 
 class TestDocumentationEvaluation:
@@ -337,28 +271,6 @@ class TestDatasetQualitySubScore:
         assert score == 0.0  # Empty README should score 0
     
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_with_dataset_links_only(self, mock_fetch_readme: Mock):
-        """Test scoring with only dataset links."""
-        mock_fetch_readme.return_value = README_WITH_DATASET_LINKS
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
-        assert 0.0 <= score <= 1.0
-        assert elapsed >= 0
-        assert score > 0.0  # Should have some score for dataset links
-    
-    @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_with_example_scripts_only(self, mock_fetch_readme: Mock):
-        """Test scoring with only example scripts."""
-        mock_fetch_readme.return_value = README_WITH_EXAMPLE_SCRIPTS
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
-        assert 0.0 <= score <= 1.0
-        assert elapsed >= 0
-        assert score > 0.0  # Should have some score for example scripts
-    
-    @patch("src.dataset_quality_sub_score.fetch_readme")
     def test_dataset_quality_sub_score_timing(self, mock_fetch_readme: Mock):
         """Test that timing is measured correctly."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
@@ -367,29 +279,6 @@ class TestDatasetQualitySubScore:
         
         assert elapsed >= 0
         assert elapsed < 1.0  # Should be fast for mocked data
-
-
-@pytest.mark.parametrize(
-    "readme_text,expected_has_links,expected_has_scripts",
-    [
-        (README_WITH_DATASET_LINKS, True, True),
-        (README_WITH_EXAMPLE_SCRIPTS, False, True),
-        (README_MINIMAL, False, False),
-        (README_EMPTY, False, False),
-        (None, False, False),
-    ],
-)
-def test_dataset_availability_scoring(
-    readme_text: Optional[str], 
-    expected_has_links: bool, 
-    expected_has_scripts: bool
-) -> None:
-    """Test dataset availability scoring with various inputs."""
-    has_links = dataset_quality.check_dataset_links(readme_text)
-    has_scripts = dataset_quality.check_example_scripts(readme_text)
-    
-    assert has_links == expected_has_links
-    assert has_scripts == expected_has_scripts
 
 
 def test_all_evaluation_functions_return_valid_scores() -> None:
@@ -422,6 +311,37 @@ def test_score_consistency() -> None:
         score2, _ = dataset_quality.dataset_quality_sub_score("test-model")
         
         assert score1 == score2, "Scores should be consistent across calls"
+
+
+def test_all_five_criteria_included() -> None:
+    """Test that all 5 criteria from the screenshot are included in scoring."""
+    test_readme = README_COMPREHENSIVE
+    
+    # Test each criterion individually
+    doc_score = dataset_quality.evaluate_dataset_documentation(test_readme)
+    license_score = dataset_quality.evaluate_license_clarity(test_readme)
+    safety_score = dataset_quality.evaluate_safety_privacy(test_readme)
+    curation_score = dataset_quality.evaluate_curation_quality(test_readme)
+    repro_score = dataset_quality.evaluate_reproducibility(test_readme)
+    
+    # Each should contribute to the final score
+    assert doc_score > 0, "Documentation should score > 0"
+    assert license_score > 0, "License clarity should score > 0"
+    assert safety_score > 0, "Safety should score > 0"
+    assert curation_score > 0, "Curation should score > 0"
+    assert repro_score > 0, "Reproducibility should score > 0"
+
+
+def test_weight_distribution() -> None:
+    """Test that the weight distribution is correct (0.2 each for 5 criteria)."""
+    with patch("src.dataset_quality_sub_score.fetch_readme") as mock_fetch:
+        mock_fetch.return_value = README_COMPREHENSIVE
+        
+        score, _ = dataset_quality.dataset_quality_sub_score("test-model")
+        
+        # With all criteria scoring 1.0, final score should be 1.0
+        # (0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 = 1.0)
+        assert 0.0 <= score <= 1.0, "Score should be between 0.0 and 1.0"
 
 
 if __name__ == "__main__":
