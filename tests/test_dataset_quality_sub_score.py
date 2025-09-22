@@ -1,10 +1,8 @@
-from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
 
 import src.dataset_quality_sub_score as dataset_quality
-
 
 # Test data for various README scenarios
 README_WITH_DOCUMENTATION = """
@@ -121,20 +119,22 @@ Basic model description.
 
 class TestDocumentationEvaluation:
     """Test dataset documentation evaluation."""
-    
-    def test_evaluate_dataset_documentation_comprehensive(self):
+
+    def test_evaluate_dataset_documentation_comprehensive(self) -> None:  # type: ignore
         """Test comprehensive documentation scoring."""
-        score = dataset_quality.evaluate_dataset_documentation(README_WITH_DOCUMENTATION)
+        score = dataset_quality.evaluate_dataset_documentation(
+            README_WITH_DOCUMENTATION
+        )
         assert 0.0 <= score <= 1.0
         assert score > 0.5  # Should have good documentation
-    
-    def test_evaluate_dataset_documentation_minimal(self):
+
+    def test_evaluate_dataset_documentation_minimal(self) -> None:
         """Test minimal documentation scoring."""
         score = dataset_quality.evaluate_dataset_documentation(README_MINIMAL)
         assert 0.0 <= score <= 1.0
         assert score < 0.5  # Should have low documentation score
-    
-    def test_evaluate_dataset_documentation_empty(self):
+
+    def test_evaluate_dataset_documentation_empty(self) -> None:
         """Test empty README scoring."""
         score = dataset_quality.evaluate_dataset_documentation(README_EMPTY)
         assert score == 0.0
@@ -142,20 +142,20 @@ class TestDocumentationEvaluation:
 
 class TestLicenseEvaluation:
     """Test license clarity evaluation."""
-    
-    def test_evaluate_license_clarity_with_license(self):
+
+    def test_evaluate_license_clarity_with_license(self) -> None:
         """Test license scoring with explicit license."""
         score = dataset_quality.evaluate_license_clarity(README_WITH_LICENSE)
         assert 0.0 <= score <= 1.0
         assert score > 0.5  # Should have good license clarity
-    
-    def test_evaluate_license_clarity_without_license(self):
+
+    def test_evaluate_license_clarity_without_license(self) -> None:
         """Test license scoring without license information."""
         score = dataset_quality.evaluate_license_clarity(README_MINIMAL)
         assert 0.0 <= score <= 1.0
         assert score < 0.5  # Should have low license score
-    
-    def test_evaluate_license_clarity_empty(self):
+
+    def test_evaluate_license_clarity_empty(self) -> None:
         """Test empty README license scoring."""
         score = dataset_quality.evaluate_license_clarity(README_EMPTY)
         assert score == 0.0
@@ -163,20 +163,20 @@ class TestLicenseEvaluation:
 
 class TestSafetyPrivacyEvaluation:
     """Test safety and privacy evaluation."""
-    
-    def test_evaluate_safety_privacy_with_considerations(self):
+
+    def test_evaluate_safety_privacy_with_considerations(self) -> None:
         """Test safety scoring with considerations."""
         score = dataset_quality.evaluate_safety_privacy(README_WITH_SAFETY)
         assert 0.0 <= score <= 1.0
         assert score > 0.5  # Should have good safety considerations
-    
-    def test_evaluate_safety_privacy_without_considerations(self):
+
+    def test_evaluate_safety_privacy_without_considerations(self) -> None:
         """Test safety scoring without considerations."""
         score = dataset_quality.evaluate_safety_privacy(README_MINIMAL)
         assert 0.0 <= score <= 1.0
         assert score < 0.5  # Should have low safety score
-    
-    def test_evaluate_safety_privacy_empty(self):
+
+    def test_evaluate_safety_privacy_empty(self) -> None:
         """Test empty README safety scoring."""
         score = dataset_quality.evaluate_safety_privacy(README_EMPTY)
         assert score == 0.0
@@ -184,20 +184,20 @@ class TestSafetyPrivacyEvaluation:
 
 class TestCurationEvaluation:
     """Test curation quality evaluation."""
-    
-    def test_evaluate_curation_quality_with_curation(self):
+
+    def test_evaluate_curation_quality_with_curation(self) -> None:
         """Test curation scoring with quality measures."""
         score = dataset_quality.evaluate_curation_quality(README_WITH_CURATION)
         assert 0.0 <= score <= 1.0
         assert score > 0.5  # Should have good curation info
-    
-    def test_evaluate_curation_quality_without_curation(self):
+
+    def test_evaluate_curation_quality_without_curation(self) -> None:
         """Test curation scoring without quality measures."""
         score = dataset_quality.evaluate_curation_quality(README_MINIMAL)
         assert 0.0 <= score <= 1.0
         assert score < 0.5  # Should have low curation score
-    
-    def test_evaluate_curation_quality_empty(self):
+
+    def test_evaluate_curation_quality_empty(self) -> None:
         """Test empty README curation scoring."""
         score = dataset_quality.evaluate_curation_quality(README_EMPTY)
         assert score == 0.0
@@ -205,20 +205,22 @@ class TestCurationEvaluation:
 
 class TestReproducibilityEvaluation:
     """Test reproducibility evaluation."""
-    
-    def test_evaluate_reproducibility_with_instructions(self):
+
+    def test_evaluate_reproducibility_with_instructions(self) -> None:
         """Test reproducibility scoring with instructions."""
-        score = dataset_quality.evaluate_reproducibility(README_WITH_REPRODUCIBILITY)
+        score = dataset_quality.evaluate_reproducibility(
+            README_WITH_REPRODUCIBILITY
+        )
         assert 0.0 <= score <= 1.0
         assert score > 0.5  # Should have good reproducibility info
-    
-    def test_evaluate_reproducibility_without_instructions(self):
+
+    def test_evaluate_reproducibility_without_instructions(self) -> None:
         """Test reproducibility scoring without instructions."""
         score = dataset_quality.evaluate_reproducibility(README_MINIMAL)
         assert 0.0 <= score <= 1.0
         assert score < 0.5  # Should have low reproducibility score
-    
-    def test_evaluate_reproducibility_empty(self):
+
+    def test_evaluate_reproducibility_empty(self) -> None:
         """Test empty README reproducibility scoring."""
         score = dataset_quality.evaluate_reproducibility(README_EMPTY)
         assert score == 0.0
@@ -226,57 +228,73 @@ class TestReproducibilityEvaluation:
 
 class TestDatasetQualitySubScore:
     """Test the main dataset quality scoring function."""
-    
+
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_comprehensive(self, mock_fetch_readme: Mock):
+    def test_dataset_quality_sub_score_comprehensive(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test comprehensive dataset quality scoring."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
+
         assert 0.0 <= score <= 1.0
         assert elapsed >= 0
         assert score > 0.7  # Comprehensive README should score high
-    
+
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_minimal(self, mock_fetch_readme: Mock):
+    def test_dataset_quality_sub_score_minimal(self, mock_fetch_readme: Mock) -> None:
         """Test minimal dataset quality scoring."""
         mock_fetch_readme.return_value = README_MINIMAL
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
+
         assert 0.0 <= score <= 1.0
         assert elapsed >= 0
         assert score < 0.3  # Minimal README should score low
-    
+
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_no_readme(self, mock_fetch_readme: Mock):
+    def test_dataset_quality_sub_score_no_readme(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test scoring when README cannot be fetched."""
         mock_fetch_readme.return_value = None
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
+
         assert score == 0.0
         assert elapsed >= 0
-    
+
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_empty_readme(self, mock_fetch_readme: Mock):
+    def test_dataset_quality_sub_score_empty_readme(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test scoring with empty README."""
         mock_fetch_readme.return_value = README_EMPTY
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
+
         assert 0.0 <= score <= 1.0
         assert elapsed >= 0
         assert score == 0.0  # Empty README should score 0
-    
+
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_timing(self, mock_fetch_readme: Mock):
+    def test_dataset_quality_sub_score_timing(self, mock_fetch_readme: Mock) -> None:
         """Test that timing is measured correctly."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
-        
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
+
         assert elapsed >= 0
         assert elapsed < 1.0  # Should be fast for mocked data
 
@@ -284,13 +302,13 @@ class TestDatasetQualitySubScore:
 def test_all_evaluation_functions_return_valid_scores() -> None:
     """Test that all evaluation functions return valid scores."""
     test_readme = README_COMPREHENSIVE
-    
+
     doc_score = dataset_quality.evaluate_dataset_documentation(test_readme)
     license_score = dataset_quality.evaluate_license_clarity(test_readme)
     safety_score = dataset_quality.evaluate_safety_privacy(test_readme)
     curation_score = dataset_quality.evaluate_curation_quality(test_readme)
     repro_score = dataset_quality.evaluate_reproducibility(test_readme)
-    
+
     # All scores should be between 0.0 and 1.0
     for score, name in [
         (doc_score, "documentation"),
@@ -306,24 +324,24 @@ def test_score_consistency() -> None:
     """Test that scores are consistent across multiple calls."""
     with patch("src.dataset_quality_sub_score.fetch_readme") as mock_fetch:
         mock_fetch.return_value = README_COMPREHENSIVE
-        
+
         score1, _ = dataset_quality.dataset_quality_sub_score("test-model")
         score2, _ = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
         assert score1 == score2, "Scores should be consistent across calls"
 
 
 def test_all_five_criteria_included() -> None:
     """Test that all 5 criteria from the screenshot are included in scoring."""
     test_readme = README_COMPREHENSIVE
-    
+
     # Test each criterion individually
     doc_score = dataset_quality.evaluate_dataset_documentation(test_readme)
     license_score = dataset_quality.evaluate_license_clarity(test_readme)
     safety_score = dataset_quality.evaluate_safety_privacy(test_readme)
     curation_score = dataset_quality.evaluate_curation_quality(test_readme)
     repro_score = dataset_quality.evaluate_reproducibility(test_readme)
-    
+
     # Each should contribute to the final score
     assert doc_score > 0, "Documentation should score > 0"
     assert license_score > 0, "License clarity should score > 0"
@@ -333,12 +351,12 @@ def test_all_five_criteria_included() -> None:
 
 
 def test_weight_distribution() -> None:
-    """Test that the weight distribution is correct (0.2 each for 5 criteria)."""
+    """Test that weight distribution is correct (0.2 each for 5 criteria)."""
     with patch("src.dataset_quality_sub_score.fetch_readme") as mock_fetch:
         mock_fetch.return_value = README_COMPREHENSIVE
-        
+
         score, _ = dataset_quality.dataset_quality_sub_score("test-model")
-        
+
         # With all criteria scoring 1.0, final score should be 1.0
         # (0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 = 1.0)
         assert 0.0 <= score <= 1.0, "Score should be between 0.0 and 1.0"
