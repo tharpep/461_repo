@@ -2,7 +2,7 @@ import re
 import time
 from typing import Optional, Tuple
 
-from license_sub_score import fetch_readme
+from src.license_sub_score import fetch_readme
 
 
 def check_dataset_links(readme_text: Optional[str]) -> bool:

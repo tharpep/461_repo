@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src import dataset_quality_sub_score as dataset_quality
+import src.dataset_quality_sub_score as dataset_quality
 
 
 # Test data for various README scenarios
