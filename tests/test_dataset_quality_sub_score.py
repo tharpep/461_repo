@@ -120,7 +120,9 @@ Basic model description.
 class TestDocumentationEvaluation:
     """Test dataset documentation evaluation."""
 
-    def test_evaluate_dataset_documentation_comprehensive(self) -> None:  # type: ignore
+    def test_evaluate_dataset_documentation_comprehensive(
+        self
+    ) -> None:  # type: ignore
         """Test comprehensive documentation scoring."""
         score = dataset_quality.evaluate_dataset_documentation(
             README_WITH_DOCUMENTATION
@@ -245,7 +247,9 @@ class TestDatasetQualitySubScore:
         assert score > 0.7  # Comprehensive README should score high
 
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_minimal(self, mock_fetch_readme: Mock) -> None:
+    def test_dataset_quality_sub_score_minimal(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test minimal dataset quality scoring."""
         mock_fetch_readme.return_value = README_MINIMAL
 
@@ -287,7 +291,9 @@ class TestDatasetQualitySubScore:
         assert score == 0.0  # Empty README should score 0
 
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_quality_sub_score_timing(self, mock_fetch_readme: Mock) -> None:
+    def test_dataset_quality_sub_score_timing(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test that timing is measured correctly."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
 
