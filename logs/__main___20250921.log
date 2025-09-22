@@ -1,0 +1,15 @@
+2025-09-21 19:30:57 - __main__ - DEBUG - logging_example.py:20 - This is a debug message - detailed information
+2025-09-21 19:30:57 - __main__ - INFO - logging_example.py:21 - This is an info message - general information
+2025-09-21 19:30:57 - __main__ - WARNING - logging_example.py:22 - This is a warning message - something unexpected happened
+2025-09-21 19:30:57 - __main__ - ERROR - logging_example.py:23 - This is an error message - something went wrong
+2025-09-21 19:30:57 - __main__ - CRITICAL - logging_example.py:24 - This is a critical message - serious error
+2025-09-21 19:30:58 - __main__ - INFO - logging_config.py:239 - Performance: example_function completed in 0.102s
+2025-09-21 19:30:58 - __main__ - ERROR - logging_config.py:256 - Error in example_function: Example error for demonstration
+Traceback (most recent call last):
+  File "/Users/shaansriram/Desktop/461_repo_shaan/src/logging_example.py", line 33, in example_function
+    raise ValueError("Example error for demonstration")
+ValueError: Example error for demonstration
+2025-09-21 19:30:58 - __main__ - INFO - logging_example.py:44 - Processing request with correlation ID
+2025-09-21 19:30:58 - __main__ - DEBUG - logging_example.py:45 - Request details: user_id=123, action=update
+2025-09-21 19:30:58 - __main__ - DEBUG - logging_example.py:63 - This will now be visible in console
+2025-09-21 19:30:58 - __main__ - INFO - logging_example.py:64 - This will be visible in both console and file

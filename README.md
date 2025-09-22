@@ -4,4 +4,4 @@
 Anjali Vanamala
 Andrew Diab
 Pryce Tharpe
-Shaantanu Sriram
+Shaan Sriram (Shaantanu Sriram)
