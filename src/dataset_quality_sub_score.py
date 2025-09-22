@@ -1,15 +1,11 @@
-import os
 import re
 import time
 from typing import Optional, Tuple
 
-import requests
-
-from hugging_face_api import get_model_info
 from license_sub_score import fetch_readme
 
 
-def check_dataset_links(readme_text: str) -> bool:
+def check_dataset_links(readme_text: Optional[str]) -> bool:
     """
     Check if README contains dataset links.
     Looks for common dataset hosting patterns and URLs.
@@ -48,7 +44,7 @@ def check_dataset_links(readme_text: str) -> bool:
     return False
 
 
-def check_example_scripts(readme_text: str) -> bool:
+def check_example_scripts(readme_text: Optional[str]) -> bool:
     """
     Check if README contains example scripts or code snippets.
     
@@ -79,7 +75,7 @@ def check_example_scripts(readme_text: str) -> bool:
     return False
 
 
-def evaluate_dataset_documentation(readme_text: str) -> float:
+def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
     """
     Evaluate dataset documentation quality based on README content.
     
@@ -132,7 +128,7 @@ def evaluate_dataset_documentation(readme_text: str) -> float:
     return min(1.0, score)
 
 
-def evaluate_license_clarity(readme_text: str) -> float:
+def evaluate_license_clarity(readme_text: Optional[str]) -> float:
     """
     Evaluate license clarity for the dataset.
     
@@ -172,7 +168,7 @@ def evaluate_license_clarity(readme_text: str) -> float:
     return min(1.0, score)
 
 
-def evaluate_safety_privacy(readme_text: str) -> float:
+def evaluate_safety_privacy(readme_text: Optional[str]) -> float:
     """
     Evaluate safety and privacy considerations mentioned in the dataset.
     
@@ -214,7 +210,7 @@ def evaluate_safety_privacy(readme_text: str) -> float:
     return min(1.0, score)
 
 
-def evaluate_curation_quality(readme_text: str) -> float:
+def evaluate_curation_quality(readme_text: Optional[str]) -> float:
     """
     Evaluate curation and quality control measures mentioned.
     
@@ -252,7 +248,7 @@ def evaluate_curation_quality(readme_text: str) -> float:
     return min(1.0, score)
 
 
-def evaluate_reproducibility(readme_text: str) -> float:
+def evaluate_reproducibility(readme_text: Optional[str]) -> float:
     """
     Evaluate reproducibility aspects of the dataset.
     

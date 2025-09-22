@@ -1,9 +1,9 @@
-from typing import Any, Optional
+from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
 
-import src.dataset_quality_sub_score as dataset_quality
+from src import dataset_quality_sub_score as dataset_quality
 
 
 # Test data for various README scenarios
