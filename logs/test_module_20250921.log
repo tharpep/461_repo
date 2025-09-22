@@ -1,0 +1,3 @@
+2025-09-21 19:32:19 - test_module - INFO - test_logging_simple.py:28 - Test info message
+2025-09-21 19:32:19 - test_module - WARNING - test_logging_simple.py:29 - Test warning message
+2025-09-21 19:32:19 - test_module - ERROR - test_logging_simple.py:30 - Test error message

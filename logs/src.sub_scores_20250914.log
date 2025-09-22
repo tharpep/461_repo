@@ -1,0 +1,7 @@
+2025-09-14 20:57:46 - src.sub_scores - DEBUG - sub_scores.py:87 - Calculating license sub-score for: https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking
+2025-09-14 20:57:46 - src.sub_scores - DEBUG - sub_scores.py:31 - Fetching README from: https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking
+2025-09-14 20:57:46 - src.sub_scores - DEBUG - sub_scores.py:40 - Converted to raw URL: https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking/resolve/main/README.md
+2025-09-14 20:57:47 - src.sub_scores - INFO - sub_scores.py:45 - Successfully fetched README from https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking
+2025-09-14 20:57:47 - src.sub_scores - DEBUG - sub_scores.py:97 - Extracted license: apache-2.0
+2025-09-14 20:57:47 - src.sub_scores - INFO - sub_scores.py:116 - No compatible license found for https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking (found: apache-2.0)
+2025-09-14 20:57:47 - src.sub_scores - INFO - logging_config.py:226 - Performance: license_sub_score (incompatible) completed in 0.193s

@@ -18,19 +18,13 @@ COMPATIBLE_LICENSES = {
 
 """
 Fetch the README.md text from a Hugging Face model repository. Uses the
-model URL. Checks if the given URL is for the model page or for
-the code tree.
+model ID (e.g., "baidu/ERNIE-4.5-21B-A3B-Thinking").
 """
 
 
-def fetch_readme(model_url: str) -> Optional[str]:
-    # Convert tree/main URL into raw README URL
-    if "tree/main" in model_url:
-        base = model_url.split("tree/main")[0]
-        raw_url = f"{base}resolve/main/README.md"
-    else:
-        raw_url = f"{model_url}/resolve/main/README.md"
-
+def fetch_readme(model_id: str) -> Optional[str]:
+    # Construct raw README URL from model ID
+    raw_url = f"https://huggingface.co/{model_id}/resolve/main/README.md"
     try:
         response = requests.get(raw_url, timeout=10)
         response.raise_for_status()
@@ -44,8 +38,6 @@ def fetch_readme(model_url: str) -> Optional[str]:
 """
 Extract license information from a Hugging Face README.md file.
 Handles both YAML front matter and '## License' sections.
-(The example is a yaml but it says to look for a heading so I added both).
-Doesn't use hugging face API.
 """
 
 
@@ -71,19 +63,18 @@ def extract_license(readme_text: str) -> Optional[str]:
 Calculate license sub-score:
 - 1 if license is present and compatible with LGPL v2.1
 - 0 if not found or incompatible
+Input: model_id (e.g., "baidu/ERNIE-4.5-21B-A3B-Thinking")
 """
 
 
-def license_sub_score(model_url: str) -> tuple[int, float]:
+def license_sub_score(model_id: str) -> tuple[int, float]:
     start_time = time.time()
-    readme = fetch_readme(model_url)
-    # print(f"Readme: {readme}")
+    readme = fetch_readme(model_id)
     if not readme:
         end_time = time.time()
         return (0, end_time - start_time)
 
     license_str = extract_license(readme)
-    # print(f"License: {license_str}")
     if not license_str:
         end_time = time.time()
         return (0, end_time - start_time)
@@ -101,5 +92,5 @@ def license_sub_score(model_url: str) -> tuple[int, float]:
 
 
 if __name__ == "__main__":
-    url = "https://huggingface.co/baidu/ERNIE-4.5-21B-A3B-Thinking"
-    print(license_sub_score(url))  # -> 1 if compatible, 0 otherwise
+    model_id = "baidu/ERNIE-4.5-21B-A3B-Thinking"
+    print(license_sub_score(model_id))  # -> 1 if compatible, 0 otherwise
