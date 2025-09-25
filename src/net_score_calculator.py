@@ -19,9 +19,10 @@ from dataset_quality_sub_score import dataset_quality_sub_score
 from license_sub_score import license_sub_score
 from performance_claims_sub_score import performance_claims_sub_score
 from ramp_up_sub_score import ramp_up_time_score
+from schema import ProjectMetadata
 
 
-def calculate_net_score(model_id: str) -> Dict:
+def calculate_net_score(model_id: str) -> ProjectMetadata:
     """
     Calculate the overall NetScore for a model using all available metrics.
 
@@ -29,7 +30,7 @@ def calculate_net_score(model_id: str) -> Dict:
         model_id: Hugging Face model ID (e.g., "microsoft/DialoGPT-medium")
 
     Returns:
-        Dictionary containing all scores and the calculated NetScore
+        ProjectMetadata object containing all scores and the calculated NetScore
     """
     start_time = time.time()
 
@@ -97,57 +98,37 @@ def calculate_net_score(model_id: str) -> Dict:
     print(f"\nNetScore: {net_score:.3f}")
     print(f"Total calculation time: {total_latency}ms")
 
-    # Return comprehensive results
-    return {
-        "model_id": model_id,
-        "net_score": net_score,
-        "net_score_latency": total_latency,
-
-        # Individual scores
-        "size_score": {"raspberry_pi": size_score},  # Schema expects dict
-        "size_score_latency": size_latency,
-
-        "license": license_score,
-        "license_latency": int(license_latency * 1000),
-
-        "ramp_up_time": ramp_up_score,
-        "ramp_up_time_latency": int(ramp_up_latency * 1000),
-
-        "bus_factor": bus_factor,
-        "bus_factor_latency": bus_factor_latency,
-
-        "dataset_and_code_score": dataset_code_score,
-        "dataset_and_code_score_latency": int(dataset_code_latency * 1000),
-
-        "dataset_quality": dataset_quality,
-        "dataset_quality_latency": int(dataset_quality_latency * 1000),
-
-        "code_quality": code_quality,
-        "code_quality_latency": code_quality_latency,
-
-        "performance_claims": performance_claims,
-        "performance_claims_latency": int(performance_claims_latency * 1000),
-
-        # Weight breakdown for transparency
-        "weight_breakdown": {
-            "size_contribution": 0.05 * size_score,
-            "license_contribution": 0.2 * license_score,
-            "ramp_up_contribution": 0.2 * ramp_up_score,
-            "bus_factor_contribution": 0.05 * bus_factor,
-            "dataset_code_contribution": 0.15 * dataset_code_score,
-            "dataset_quality_contribution": 0.15 * dataset_quality,
-            "code_quality_contribution": 0.1 * code_quality,
-            "performance_claims_contribution": 0.1 * performance_claims,
-        }
-    }
+    # Return ProjectMetadata object
+    return ProjectMetadata(
+        name=model_id,
+        category="MODEL",
+        net_score=net_score,
+        net_score_latency=total_latency,
+        ramp_up_time=ramp_up_score,
+        ramp_up_time_latency=int(ramp_up_latency * 1000),
+        bus_factor=bus_factor,
+        bus_factor_latency=bus_factor_latency,
+        performance_claims=performance_claims,
+        performance_claims_latency=int(performance_claims_latency * 1000),
+        license=license_score,
+        license_latency=int(license_latency * 1000),
+        size_score={"raspberry_pi": size_score},
+        size_score_latency=size_latency,
+        dataset_and_code_score=dataset_code_score,
+        dataset_and_code_score_latency=int(dataset_code_latency * 1000),
+        dataset_quality=dataset_quality,
+        dataset_quality_latency=int(dataset_quality_latency * 1000),
+        code_quality=code_quality,
+        code_quality_latency=code_quality_latency,
+    )
 
 
-def print_score_summary(results: Dict) -> None:
+def print_score_summary(results: ProjectMetadata) -> None:
     """Print a formatted summary of the scoring results."""
     print("\n" + "="*60)
     print("NETSCORE CALCULATION SUMMARY")
     print("="*60)
-    print(f"Model: {results['model_id']}")
+    print(f"Model: {results['name']}")
     print(f"NetScore: {results['net_score']:.3f}")
     print(f"Total Time: {results['net_score_latency']}ms")
     print("\nIndividual Scores:")
@@ -159,10 +140,7 @@ def print_score_summary(results: Dict) -> None:
     print(f"  Dataset Quality: {results['dataset_quality']:.3f}")
     print(f"  Code Quality: {results['code_quality']:.3f}")
     print(f"  Performance Claims: {results['performance_claims']:.3f}")
-
-    print("\nWeight Contributions:")
-    for metric, contribution in results['weight_breakdown'].items():
-        print(f"  {metric.replace('_', ' ').title()}: {contribution:.3f}")
+    print("="*60)
 
 
 if __name__ == "__main__":
