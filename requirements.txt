@@ -1,18 +1,12 @@
 # Core dependencies for the model scoring tool
 requests>=2.25.0
 
-# Optional dependencies for enhanced functionality
-# (These are standard library modules, but listed for completeness)
-# math - built-in
-# time - built-in  
-# re - built-in
-# os - built-in
-# sys - built-in
-# typing - built-in
-# logging - built-in
-# pathlib - built-in
-# enum - built-in
-# functools - built-in
-# argparse - built-in
-# multiprocessing - built-in
-# datetime - built-in
+# Development and build dependencies
+pyinstaller>=5.0.0
+
+# Testing dependencies (optional)
+pytest>=7.0.0
+
+# Standard library modules (built-in, listed for reference)
+# math, time, re, os, sys, typing, logging, pathlib, enum, 
+# functools, argparse, multiprocessing, datetime
