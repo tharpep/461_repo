@@ -80,27 +80,54 @@ def process_urls(url_file: str) -> int:
 def run_tests() -> int:
     """Run test suite and report coverage."""
     try:
-        # Run tests without coverage (since pytest-cov isn't installed)
-        # Add timeout to prevent hanging
+        # Run tests with coverage
         result = subprocess.run([
-            sys.executable, "-m", "pytest", "tests/", "--tb=short"
+            sys.executable, "-m", "pytest", "tests/", "--cov=src", 
+            "--cov-report=term-missing", "--tb=short"
         ], capture_output=True, text=True, timeout=300)  # 5 minute timeout
 
-        # Extract the exact pytest summary line
+        # Parse pytest output to extract test counts and coverage
         lines = result.stdout.split('\n')
-        summary_line = ""
-
-        # Look for the summary line that contains test results
+        
+        # Extract test results
+        passed = 0
+        failed = 0
+        skipped = 0
+        total = 0
+        coverage_percent = 0
+        
+        import re
+        
         for line in lines:
-            if "failed" in line and "passed" in line and "skipped" in line \
-                    and "=" in line:
-                summary_line = line.strip()
+            # Look for test summary line like "=== 3 failed, 164 passed, 2 skipped in 36.12s ==="
+            if "passed" in line and "===" in line and "in" in line and "s" in line:
+                # Parse the counts
+                passed_match = re.search(r'(\d+)\s+passed', line)
+                failed_match = re.search(r'(\d+)\s+failed', line)
+                skipped_match = re.search(r'(\d+)\s+skipped', line)
+                
+                if passed_match:
+                    passed = int(passed_match.group(1))
+                if failed_match:
+                    failed = int(failed_match.group(1))
+                if skipped_match:
+                    skipped = int(skipped_match.group(1))
+                
+                total = passed + failed + skipped
                 break
-
-        if summary_line:
-            print(summary_line)
-        else:
-            print("Test results could not be parsed")
+        
+        # Extract coverage percentage from TOTAL line
+        for line in lines:
+            if "TOTAL" in line and "%" in line:
+                # Look for coverage line like "TOTAL                         1209    644    47%"
+                coverage_match = re.search(r'(\d+)%', line)
+                if coverage_match:
+                    coverage_percent = int(coverage_match.group(1))
+                break
+        
+        # Output in the exact format expected by autograder
+        print(f"{passed}/{total} test cases passed. {coverage_percent}% line coverage achieved.")
+        
         return 0 if result.returncode == 0 else 1
 
     except subprocess.TimeoutExpired:
