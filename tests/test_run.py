@@ -159,6 +159,97 @@ https://github.com/test2,,https://huggingface.co/model2
         finally:
             os.unlink(temp_file)
 
+    def test_invalid_github_token(self) -> None:
+        """Test run script with invalid GITHUB_TOKEN environment variable."""
+        # Create test file for URL processing (avoids infinite loop)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
+            f.write(",,https://huggingface.co/test/model\n")
+            temp_file = f.name
+
+        try:
+            env = os.environ.copy()
+            env['GITHUB_TOKEN'] = 'invalid'
+
+            result = subprocess.run(['python', 'run', temp_file],
+                                    capture_output=True, text=True,
+                                    cwd='.', env=env)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Error: Invalid GITHUB_TOKEN", result.stderr)
+        finally:
+            os.unlink(temp_file)
+
+    def test_invalid_log_file_path(self) -> None:
+        """Test run script with invalid LOG_FILE environment variable."""
+        # Create test file for URL processing (avoids infinite loop)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
+            f.write(",,https://huggingface.co/test/model\n")
+            temp_file = f.name
+
+        try:
+            env = os.environ.copy()
+            env['LOG_FILE'] = '/nonexistent/directory/test.log'
+            # Remove GITHUB_TOKEN if set to avoid interference
+            env.pop('GITHUB_TOKEN', None)
+
+            result = subprocess.run(['python', 'run', temp_file],
+                                    capture_output=True, text=True,
+                                    cwd='.', env=env)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Error: Log file directory does not exist",
+                          result.stderr)
+        finally:
+            os.unlink(temp_file)
+
+    def test_valid_environment_variables(self) -> None:
+        """Test run script with valid environment variables."""
+        # Create test file for URL processing (avoids infinite loop)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
+            f.write(",,https://huggingface.co/test/model\n")
+            temp_file = f.name
+
+        try:
+            env = os.environ.copy()
+            env['LOG_LEVEL'] = '1'
+            # Remove potentially problematic env vars
+            env.pop('GITHUB_TOKEN', None)
+            env.pop('LOG_FILE', None)
+
+            result = subprocess.run(['python', 'run', temp_file],
+                                    capture_output=True, text=True,
+                                    cwd='.', env=env)
+            self.assertEqual(result.returncode, 0)
+            # Should output JSON results normally
+            self.assertIn('"name":', result.stdout)
+            self.assertIn('"category":', result.stdout)
+        finally:
+            os.unlink(temp_file)
+
+    def test_invalid_log_level(self) -> None:
+        """Test run script with invalid LOG_LEVEL environment variable."""
+        # Create test file for URL processing (avoids infinite loop)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
+            f.write(",,https://huggingface.co/test/model\n")
+            temp_file = f.name
+
+        try:
+            env = os.environ.copy()
+            env['LOG_LEVEL'] = 'invalid_level'
+            # Remove potentially problematic env vars
+            env.pop('GITHUB_TOKEN', None)
+            env.pop('LOG_FILE', None)
+
+            result = subprocess.run(['python', 'run', temp_file],
+                                    capture_output=True, text=True,
+                                    cwd='.', env=env)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Error: LOG_LEVEL must be an integer", result.stderr)
+        finally:
+            os.unlink(temp_file)
+
 
 if __name__ == '__main__':
     unittest.main()
