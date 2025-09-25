@@ -22,7 +22,6 @@ def extract_model_name(model_url: str) -> str:
     """Extract model name from Hugging Face URL."""
     if not model_url or model_url.strip() == "":
         return "unknown"
-    
     # Handle different URL formats
     if "/" in model_url:
         parts = model_url.split("/")
@@ -37,7 +36,6 @@ def extract_model_name(model_url: str) -> str:
                 if "/" in model_name:
                     model_name = model_name.split("/")[0]
                 return model_name
-    
     return model_url.strip()
 
 
@@ -45,7 +43,6 @@ def calculate_all_scores(code_link: str, dataset_link: str,
                          model_link: str) -> Dict[str, Any]:
     """Calculate all scores for a given set of links."""
     model_name = extract_model_name(model_link)
-    
     # Initialize result with model info
     result = {
         "name": model_name,
@@ -74,7 +71,6 @@ def calculate_all_scores(code_link: str, dataset_link: str,
         "code_quality": 0.0,
         "code_quality_latency": 0
     }
-    
     # Calculate each score with timing
     try:
         # License Score
@@ -82,81 +78,101 @@ def calculate_all_scores(code_link: str, dataset_link: str,
         license_score = license_sub_score.license_sub_score(model_link)
         # Handle both single values and tuples
         if isinstance(license_score, (list, tuple)):
-            result["license"] = license_score[0] if len(license_score) > 0 else 0.0
+            result["license"] = (license_score[0]
+                                 if len(license_score) > 0 else 0.0)
         else:
             result["license"] = float(license_score) if license_score else 0.0
-        result["license_latency"] = int((time.time() - start_time) * 1000)
+        result["license_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating license score for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating license score for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Bus Factor Score
         start_time = time.time()
         bus_score = bus_factor.bus_factor_score(model_link)
         result["bus_factor"] = bus_score
-        result["bus_factor_latency"] = int((time.time() - start_time) * 1000)
+        result["bus_factor_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating bus factor for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating bus factor for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Ramp Up Score
         start_time = time.time()
         ramp_score, _ = ramp_up_sub_score.ramp_up_time_score(model_link)
         result["ramp_up_time"] = ramp_score
-        result["ramp_up_time_latency"] = int((time.time() - start_time) * 1000)
+        result["ramp_up_time_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating ramp up score for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating ramp up score for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Performance Claims Score
         start_time = time.time()
-        perf_score = performance_claims_sub_score.performance_claims_sub_score(model_link)
+        perf_score = performance_claims_sub_score.performance_claims_sub_score(
+            model_link)
         # Handle both single values and tuples
         if isinstance(perf_score, (list, tuple)):
-            result["performance_claims"] = perf_score[0] if len(perf_score) > 0 else 0.0
+            result["performance_claims"] = (perf_score[0]
+                                            if len(perf_score) > 0 else 0.0)
         else:
-            result["performance_claims"] = float(perf_score) if perf_score else 0.0
-        result["performance_claims_latency"] = int((time.time() - start_time) * 1000)
+            result["performance_claims"] = (float(perf_score)
+                                            if perf_score else 0.0)
+        result["performance_claims_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating performance claims for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating performance claims for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Dataset Quality Score
         start_time = time.time()
-        dataset_score = dataset_quality_sub_score.dataset_quality_sub_score(dataset_link)
+        dataset_score = dataset_quality_sub_score.dataset_quality_sub_score(
+            dataset_link)
         # Handle both single values and tuples
         if isinstance(dataset_score, (list, tuple)):
-            result["dataset_quality"] = dataset_score[0] if len(dataset_score) > 0 else 0.0
+            result["dataset_quality"] = (dataset_score[0]
+                                         if len(dataset_score) > 0 else 0.0)
         else:
-            result["dataset_quality"] = float(dataset_score) if dataset_score else 0.0
-        result["dataset_quality_latency"] = int((time.time() - start_time) * 1000)
+            result["dataset_quality"] = (float(dataset_score)
+                                         if dataset_score else 0.0)
+        result["dataset_quality_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating dataset quality for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating dataset quality for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Available Dataset Code Score
         start_time = time.time()
-        code_score, _ = available_dataset_code_score.available_dataset_code_score(model_link)
+        code_score, _ = (
+            available_dataset_code_score.available_dataset_code_score(
+                model_link))
         result["code_quality"] = code_score
-        result["code_quality_latency"] = int((time.time() - start_time) * 1000)
+        result["code_quality_latency"] = int(
+            (time.time() - start_time) * 1000)
         result["dataset_and_code_score"] = code_score  # Same as code_quality
-        result["dataset_and_code_score_latency"] = int((time.time() - start_time) * 1000)
+        result["dataset_and_code_score_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating code quality for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating code quality for {model_name}: {e}",
+              file=sys.stderr)
     try:
         # Net Score (calculated from all other scores)
         start_time = time.time()
-        net_score_result = net_score_calculator.calculate_net_score(model_link)
+        net_score_result = net_score_calculator.calculate_net_score(
+            model_link)
         # Extract just the numeric score from the result
-        if isinstance(net_score_result, dict) and "net_score" in net_score_result:
+        if (isinstance(net_score_result, dict) and
+                "net_score" in net_score_result):
             result["net_score"] = net_score_result["net_score"]
         else:
-            result["net_score"] = float(net_score_result) if net_score_result else 0.0
-        result["net_score_latency"] = int((time.time() - start_time) * 1000)
+            result["net_score"] = (float(net_score_result)
+                                   if net_score_result else 0.0)
+        result["net_score_latency"] = int(
+            (time.time() - start_time) * 1000)
     except Exception as e:
-        print(f"Error calculating net score for {model_name}: {e}", file=sys.stderr)
-    
+        print(f"Error calculating net score for {model_name}: {e}",
+              file=sys.stderr)
     # Size scores - using realistic values based on model type
     # This would ideally be calculated from actual model size
     if "bert" in model_name.lower():
@@ -184,7 +200,6 @@ def calculate_all_scores(code_link: str, dataset_link: str,
             "aws_server": 1.00
         }
         result["size_score_latency"] = 40
-    
     return result
 
 
@@ -195,32 +210,25 @@ def main() -> int:
         print("Input format: CSV with code_link,dataset_link,model_link")
         print("Example: model_scorer input.csv")
         return 1
-    
     input_file = sys.argv[1]
-    
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             content = f.read().strip()
-        
         # Parse CSV content
         csv_reader = csv.reader(StringIO(content))
-        
         for row in csv_reader:
             if not row:
                 continue
-                
-            # Handle rows with fewer than 3 columns by padding with empty strings
+            # Handle rows with fewer than 3 columns by padding with empty
+            # strings
             while len(row) < 3:
                 row.append("")
-                
             code_link = row[0].strip() if row[0] else ""
             dataset_link = row[1].strip() if row[1] else ""
             model_link = row[2].strip() if row[2] else ""
-            
             # Skip rows where all fields are empty
             if not any([code_link, dataset_link, model_link]):
                 continue
-            
             # Only process rows that have a model link
             if model_link:
                 # Suppress debug prints by redirecting stdout temporarily
@@ -231,21 +239,18 @@ def main() -> int:
                 stdout_capture = io.StringIO()
                 with contextlib.redirect_stdout(stdout_capture):
                     # Calculate scores
-                    result = calculate_all_scores(code_link, dataset_link, model_link)
-                
+                    result = calculate_all_scores(code_link, dataset_link,
+                                                  model_link)
                 # Output clean JSON result (no extra whitespace)
                 print(json.dumps(result, separators=(',', ':')))
-        
         # If we get here, all URLs were processed successfully
         return 0
-        
     except FileNotFoundError:
         print(f"Error: Input file '{input_file}' not found", file=sys.stderr)
         return 1
     except Exception as e:
         print(f"Error processing input: {e}", file=sys.stderr)
         return 1
-    
     return 0
 
 

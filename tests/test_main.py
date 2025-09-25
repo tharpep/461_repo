@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 # Add the src directory to the path so we can import main
@@ -24,13 +25,15 @@ class TestMain(unittest.TestCase):
     def test_extract_model_name(self) -> None:
         """Test model name extraction from URLs."""
         test_cases = [
-            ("https://huggingface.co/google-bert/bert-base-uncased", "bert-base-uncased"),
-            ("https://huggingface.co/parvk11/audience_classifier_model", "audience_classifier_model"),
-            ("https://huggingface.co/openai/whisper-tiny/tree/main", "whisper-tiny"),
+            ("https://huggingface.co/google-bert/bert-base-uncased",
+             "bert-base-uncased"),
+            ("https://huggingface.co/parvk11/audience_classifier_model",
+             "audience_classifier_model"),
+            ("https://huggingface.co/openai/whisper-tiny/tree/main",
+             "whisper-tiny"),
             ("", "unknown"),
             ("invalid-url", "invalid-url")
         ]
-        
         for url, expected in test_cases:
             with self.subTest(url=url):
                 result = extract_model_name(url)
@@ -43,9 +46,12 @@ class TestMain(unittest.TestCase):
     @patch('main.dataset_quality_sub_score.dataset_quality_sub_score')
     @patch('main.available_dataset_code_score.available_dataset_code_score')
     @patch('main.net_score_calculator.calculate_net_score')
-    def test_calculate_all_scores(self, mock_net_score, mock_code_score, 
-                                 mock_dataset_score, mock_perf_score, 
-                                 mock_ramp_score, mock_bus_score, mock_license_score):
+    def test_calculate_all_scores(self, mock_net_score: Any,
+                                  mock_code_score: Any,
+                                  mock_dataset_score: Any,
+                                  mock_perf_score: Any,
+                                  mock_ramp_score: Any, mock_bus_score: Any,
+                                  mock_license_score: Any) -> None:
         """Test calculate_all_scores function with mocked dependencies."""
         # Set up mock return values
         mock_license_score.return_value = 1.0
@@ -55,10 +61,9 @@ class TestMain(unittest.TestCase):
         mock_dataset_score.return_value = 0.6
         mock_code_score.return_value = (0.5, 0.2)
         mock_net_score.return_value = {"net_score": 0.75}
-        
         # Test with a sample model URL
-        result = calculate_all_scores("", "", "https://huggingface.co/test/model")
-        
+        result = calculate_all_scores("", "",
+                                      "https://huggingface.co/test/model")
         # Verify the result structure
         self.assertIsInstance(result, dict)
         self.assertIn("name", result)
@@ -71,7 +76,6 @@ class TestMain(unittest.TestCase):
         self.assertIn("dataset_quality", result)
         self.assertIn("code_quality", result)
         self.assertIn("size_score", result)
-        
         # Verify values
         self.assertEqual(result["category"], "MODEL")
         self.assertEqual(result["license"], 1.0)
@@ -84,14 +88,25 @@ class TestMain(unittest.TestCase):
 
     def test_calculate_all_scores_with_bert_model(self) -> None:
         """Test calculate_all_scores with BERT model for size score logic."""
-        with patch('main.license_sub_score.license_sub_score') as mock_license, \
-             patch('main.bus_factor.bus_factor_score') as mock_bus, \
-             patch('main.ramp_up_sub_score.ramp_up_time_score') as mock_ramp, \
-             patch('main.performance_claims_sub_score.performance_claims_sub_score') as mock_perf, \
-             patch('main.dataset_quality_sub_score.dataset_quality_sub_score') as mock_dataset, \
-             patch('main.available_dataset_code_score.available_dataset_code_score') as mock_code, \
-             patch('main.net_score_calculator.calculate_net_score') as mock_net:
-            
+        # Define patch paths as variables to avoid long lines
+        license_path = 'main.license_sub_score.license_sub_score'
+        bus_path = 'main.bus_factor.bus_factor_score'
+        ramp_path = 'main.ramp_up_sub_score.ramp_up_time_score'
+        perf_path = ('main.performance_claims_sub_score.'
+                     'performance_claims_sub_score')
+        dataset_path = ('main.dataset_quality_sub_score.'
+                        'dataset_quality_sub_score')
+        code_path = ('main.available_dataset_code_score.'
+                     'available_dataset_code_score')
+        net_path = 'main.net_score_calculator.calculate_net_score'
+
+        with patch(license_path) as mock_license, \
+             patch(bus_path) as mock_bus, \
+             patch(ramp_path) as mock_ramp, \
+             patch(perf_path) as mock_perf, \
+             patch(dataset_path) as mock_dataset, \
+             patch(code_path) as mock_code, \
+             patch(net_path) as mock_net:
             # Set up mock return values
             mock_license.return_value = 1.0
             mock_bus.return_value = 0.8
@@ -100,10 +115,10 @@ class TestMain(unittest.TestCase):
             mock_dataset.return_value = 0.6
             mock_code.return_value = (0.5, 0.2)
             mock_net.return_value = {"net_score": 0.75}
-            
             # Test with BERT model
-            result = calculate_all_scores("", "", "https://huggingface.co/google-bert/bert-base-uncased")
-            
+            result = calculate_all_scores(
+                "", "",
+                "https://huggingface.co/google-bert/bert-base-uncased")
             # Verify BERT-specific size scores
             self.assertEqual(result["size_score"]["raspberry_pi"], 0.2)
             self.assertEqual(result["size_score"]["jetson_nano"], 0.4)
@@ -112,15 +127,26 @@ class TestMain(unittest.TestCase):
             self.assertEqual(result["size_score_latency"], 50)
 
     def test_calculate_all_scores_with_whisper_model(self) -> None:
-        """Test calculate_all_scores with Whisper model for size score logic."""
-        with patch('main.license_sub_score.license_sub_score') as mock_license, \
-             patch('main.bus_factor.bus_factor_score') as mock_bus, \
-             patch('main.ramp_up_sub_score.ramp_up_time_score') as mock_ramp, \
-             patch('main.performance_claims_sub_score.performance_claims_sub_score') as mock_perf, \
-             patch('main.dataset_quality_sub_score.dataset_quality_sub_score') as mock_dataset, \
-             patch('main.available_dataset_code_score.available_dataset_code_score') as mock_code, \
-             patch('main.net_score_calculator.calculate_net_score') as mock_net:
-            
+        """Test calculate_all_scores with Whisper model size score logic."""
+        # Define patch paths as variables to avoid long lines
+        license_path = 'main.license_sub_score.license_sub_score'
+        bus_path = 'main.bus_factor.bus_factor_score'
+        ramp_path = 'main.ramp_up_sub_score.ramp_up_time_score'
+        perf_path = ('main.performance_claims_sub_score.'
+                     'performance_claims_sub_score')
+        dataset_path = ('main.dataset_quality_sub_score.'
+                        'dataset_quality_sub_score')
+        code_path = ('main.available_dataset_code_score.'
+                     'available_dataset_code_score')
+        net_path = 'main.net_score_calculator.calculate_net_score'
+
+        with patch(license_path) as mock_license, \
+             patch(bus_path) as mock_bus, \
+             patch(ramp_path) as mock_ramp, \
+             patch(perf_path) as mock_perf, \
+             patch(dataset_path) as mock_dataset, \
+             patch(code_path) as mock_code, \
+             patch(net_path) as mock_net:
             # Set up mock return values
             mock_license.return_value = 1.0
             mock_bus.return_value = 0.8
@@ -129,10 +155,10 @@ class TestMain(unittest.TestCase):
             mock_dataset.return_value = 0.6
             mock_code.return_value = (0.5, 0.2)
             mock_net.return_value = {"net_score": 0.75}
-            
             # Test with Whisper model
-            result = calculate_all_scores("", "", "https://huggingface.co/openai/whisper-tiny/tree/main")
-            
+            result = calculate_all_scores(
+                "", "",
+                "https://huggingface.co/openai/whisper-tiny/tree/main")
             # Verify Whisper-specific size scores
             self.assertEqual(result["size_score"]["raspberry_pi"], 0.9)
             self.assertEqual(result["size_score"]["jetson_nano"], 0.95)
@@ -143,11 +169,16 @@ class TestMain(unittest.TestCase):
     def test_main_with_valid_file(self) -> None:
         """Test main function with a valid CSV input file."""
         # Create a temporary file with test CSV data
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
-            f.write("https://github.com/test/code,https://huggingface.co/datasets/test,https://huggingface.co/google-bert/bert-base-uncased\n")
-            f.write(",,https://huggingface.co/parvk11/audience_classifier_model\n")
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
+            f.write("https://github.com/test/code,"
+                    "https://huggingface.co/datasets/test,"
+                    "https://huggingface.co/google-bert/"
+                    "bert-base-uncased\n")
+            f.write(",,https://huggingface.co/parvk11/"
+                    "audience_classifier_model\n")
             temp_file = f.name
-        
+
         try:
             with patch('main.calculate_all_scores') as mock_calculate:
                 mock_calculate.return_value = {
@@ -163,7 +194,8 @@ class TestMain(unittest.TestCase):
                     "performance_claims_latency": 30,
                     "license": 1.0,
                     "license_latency": 10,
-                    "size_score": {"raspberry_pi": 0.5, "jetson_nano": 0.6, "desktop_pc": 0.8, "aws_server": 1.0},
+                    "size_score": {"raspberry_pi": 0.5, "jetson_nano": 0.6,
+                                   "desktop_pc": 0.8, "aws_server": 1.0},
                     "size_score_latency": 20,
                     "dataset_and_code_score": 0.5,
                     "dataset_and_code_score_latency": 15,
@@ -172,13 +204,12 @@ class TestMain(unittest.TestCase):
                     "code_quality": 0.5,
                     "code_quality_latency": 15
                 }
-                
                 # Capture stdout
                 with patch('sys.argv', ['main.py', temp_file]):
                     with patch('builtins.print') as mock_print:
                         result = main()
                         self.assertEqual(result, 0)
-                        # Verify that JSON was printed
+                        # Verify JSON was printed
                         self.assertTrue(mock_print.called)
         finally:
             os.unlink(temp_file)
@@ -196,11 +227,12 @@ class TestMain(unittest.TestCase):
             self.assertEqual(result, 1)
 
     def test_main_with_github_url_only(self) -> None:
-        """Test main function skips rows with only GitHub URLs (no model link)."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        """Test main function skips rows with only GitHub URLs (no link)."""
+        with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                         suffix='.txt') as f:
             f.write("https://github.com/test/repo,,\n")
             temp_file = f.name
-        
+
         try:
             with patch('sys.argv', ['main.py', temp_file]):
                 with patch('builtins.print') as mock_print:
