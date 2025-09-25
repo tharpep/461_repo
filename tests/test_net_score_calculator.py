@@ -13,7 +13,7 @@ from net_score_calculator import print_score_summary  # noqa: E402
 class TestNetScoreCalculator(unittest.TestCase):
     """Test cases for NetScore calculator with different HF models."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test fixtures before each test method."""
         self.test_models = [
             "gpt2",
@@ -28,7 +28,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             "nlptown/bert-base-multilingual-uncased-sentiment"
         ]
 
-    def test_calculate_net_score_structure(self):
+    def test_calculate_net_score_structure(self) -> None:
         """Test that calculate_net_score returns the correct structure."""
         model_id = "gpt2"
 
@@ -82,7 +82,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertIsInstance(results["code_quality"], (int, float))
             self.assertIsInstance(results["performance_claims"], (int, float))
 
-    def test_net_score_calculation_accuracy(self):
+    def test_net_score_calculation_accuracy(self) -> None:
         """Test that NetScore calculation follows the correct formula."""
         model_id = "test-model"
 
@@ -121,7 +121,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertAlmostEqual(results["net_score"], expected_score,
                                    places=3)
 
-    def test_weight_breakdown_calculation(self):
+    def test_weight_breakdown_calculation(self) -> None:
         """Test that weight breakdown calculations are correct."""
         model_id = "test-model"
 
@@ -167,7 +167,7 @@ class TestNetScoreCalculator(unittest.TestCase):
                 breakdown["performance_claims_contribution"],
                 0.1 * 0.5, places=3)
 
-    def test_default_values_for_missing_functions(self):
+    def test_default_values_for_missing_functions(self) -> None:
         """Test that default values are used for missing functions."""
         model_id = "test-model"
 
@@ -199,7 +199,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertEqual(results["size_score_latency"], 0)
             self.assertEqual(results["code_quality_latency"], 0)
 
-    def test_latency_conversion(self):
+    def test_latency_conversion(self) -> None:
         """Test that latency values are properly converted to milliseconds."""
         model_id = "test-model"
 
@@ -233,7 +233,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertEqual(results["dataset_quality_latency"], 321)
             self.assertEqual(results["performance_claims_latency"], 654)
 
-    def test_model_id_preservation(self):
+    def test_model_id_preservation(self) -> None:
         """Test that model_id is correctly preserved in results."""
         test_models = ["gpt2", "bert-base-uncased",
                        "microsoft/DialoGPT-medium"]
@@ -262,7 +262,7 @@ class TestNetScoreCalculator(unittest.TestCase):
                 results = calculate_net_score(model_id)
                 self.assertEqual(results["model_id"], model_id)
 
-    def test_net_score_range(self):
+    def test_net_score_range(self) -> None:
         """Test that NetScore is within reasonable range."""
         model_id = "test-model"
 
@@ -305,7 +305,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertGreaterEqual(min_score, 0.0)
             self.assertLessEqual(max_score, 2.0)  # Upper bound
 
-    def test_print_score_summary_no_error(self):
+    def test_print_score_summary_no_error(self) -> None:
         """Test that print_score_summary doesn't raise errors."""
         model_id = "test-model"
 
@@ -337,7 +337,7 @@ class TestNetScoreCalculator(unittest.TestCase):
             except Exception as e:
                 self.fail(f"print_score_summary raised an exception: {e}")
 
-    def test_error_handling_in_scoring_functions(self):
+    def test_error_handling_in_scoring_functions(self) -> None:
         """Test that errors in scoring functions are handled gracefully."""
         model_id = "test-model"
 
@@ -375,7 +375,7 @@ class TestNetScoreCalculator(unittest.TestCase):
 class TestNetScoreWithRealModels(unittest.TestCase):
     """Integration tests with real Hugging Face models (may be slow)."""
 
-    def test_real_model_calculation(self):
+    def test_real_model_calculation(self) -> None:
         """Test calculation with a real model (if network is available)."""
         model_id = "gpt2"  # Simple, well-known model
 
