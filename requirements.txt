@@ -1,0 +1,13 @@
+# Core dependencies for the model scoring tool
+requests>=2.25.0
+
+# Development and build dependencies
+pyinstaller>=5.0.0
+
+# Testing dependencies (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Standard library modules (built-in, listed for reference)
+# math, time, re, os, sys, typing, logging, pathlib, enum, 
+# functools, argparse, multiprocessing, datetime
