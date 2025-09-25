@@ -2,7 +2,7 @@ import re
 import time
 from typing import Optional, Tuple
 
-from src.license_sub_score import fetch_readme
+from license_sub_score import fetch_readme
 
 
 def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
