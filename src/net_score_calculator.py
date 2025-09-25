@@ -11,7 +11,6 @@ Missing functions (Size, CodeQuality) are set to 0.5 as defaults.
 """
 
 import time
-from typing import Dict
 
 from available_dataset_code_score import available_dataset_code_score
 from bus_factor import bus_factor_score
@@ -30,7 +29,7 @@ def calculate_net_score(model_id: str) -> ProjectMetadata:
         model_id: Hugging Face model ID (e.g., "microsoft/DialoGPT-medium")
 
     Returns:
-        ProjectMetadata object containing all scores and the calculated NetScore
+        ProjectMetadata object containing all scores and NetScore
     """
     start_time = time.time()
 
