@@ -1,33 +1,21 @@
 #!/usr/bin/env python3
 """Batch model scoring tool - processes CSV input and outputs JSON results."""
 
-import sys
-import json
 import csv
+import json
+import sys
 import time
-from typing import Dict, Any, Optional, Tuple
 from io import StringIO
+from typing import Any, Dict
 
-# Handle both relative and absolute imports for flexibility
-try:
-    from . import (
-        license_sub_score, 
-        bus_factor, 
-        ramp_up_sub_score,
-        performance_claims_sub_score,
-        dataset_quality_sub_score,
-        net_score_calculator,
-        available_dataset_code_score
-    )
-except ImportError:
-    # Fallback for direct execution
-    import license_sub_score
-    import bus_factor
-    import ramp_up_sub_score
-    import performance_claims_sub_score
-    import dataset_quality_sub_score
-    import net_score_calculator
-    import available_dataset_code_score
+# Import scoring modules
+import available_dataset_code_score
+import bus_factor
+import dataset_quality_sub_score
+import license_sub_score
+import net_score_calculator
+import performance_claims_sub_score
+import ramp_up_sub_score
 
 
 def extract_model_name(model_url: str) -> str:
@@ -39,11 +27,11 @@ def extract_model_name(model_url: str) -> str:
     if "/" in model_url:
         parts = model_url.split("/")
         if len(parts) >= 2:
-            # For URLs like /openai/whisper-tiny/tree/main, we want "whisper-tiny"
+            # For URLs like /openai/whisper-tiny/tree/main, want "whisper-tiny"
             if len(parts) >= 3 and parts[-2] == "tree":
                 return parts[-3]  # Get the model name part (whisper-tiny)
             elif len(parts) >= 2:
-                # For URLs like /google-bert/bert-base-uncased, get the last part
+                # For URLs like /google-bert/bert-base-uncased, get last part
                 model_name = parts[-1]
                 # Remove any path components like /tree/main
                 if "/" in model_name:
@@ -53,7 +41,8 @@ def extract_model_name(model_url: str) -> str:
     return model_url.strip()
 
 
-def calculate_all_scores(code_link: str, dataset_link: str, model_link: str) -> Dict[str, Any]:
+def calculate_all_scores(code_link: str, dataset_link: str,
+                         model_link: str) -> Dict[str, Any]:
     """Calculate all scores for a given set of links."""
     model_name = extract_model_name(model_link)
     
@@ -200,10 +189,10 @@ def calculate_all_scores(code_link: str, dataset_link: str, model_link: str) -> 
 
 
 def main() -> int:
-    """Process CSV input and output JSON results."""
+    """Process CSV input with code, dataset, and model links."""
     if len(sys.argv) != 2:
-        print("Usage: model_scorer <input_csv>")
-        print("Input format: code_link,dataset_link,model_link")
+        print("Usage: model_scorer <input_file>")
+        print("Input format: CSV with code_link,dataset_link,model_link")
         print("Example: model_scorer input.csv")
         return 1
     
@@ -232,19 +221,24 @@ def main() -> int:
             if not any([code_link, dataset_link, model_link]):
                 continue
             
-            # Suppress debug prints by redirecting stdout temporarily
-            import io
-            import contextlib
-            
-            # Capture stdout to suppress debug prints
-            f = io.StringIO()
-            with contextlib.redirect_stdout(f):
-                # Calculate scores
-                result = calculate_all_scores(code_link, dataset_link, model_link)
-            
-            # Output clean JSON result (no extra whitespace)
-            print(json.dumps(result, separators=(',', ':')))
-            
+            # Only process rows that have a model link
+            if model_link:
+                # Suppress debug prints by redirecting stdout temporarily
+                import contextlib
+                import io
+
+                # Capture stdout to suppress debug prints
+                stdout_capture = io.StringIO()
+                with contextlib.redirect_stdout(stdout_capture):
+                    # Calculate scores
+                    result = calculate_all_scores(code_link, dataset_link, model_link)
+                
+                # Output clean JSON result (no extra whitespace)
+                print(json.dumps(result, separators=(',', ':')))
+        
+        # If we get here, all URLs were processed successfully
+        return 0
+        
     except FileNotFoundError:
         print(f"Error: Input file '{input_file}' not found", file=sys.stderr)
         return 1

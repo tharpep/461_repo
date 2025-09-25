@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""ECE 461 Model Scorer - TA-compliant executable script."""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+def install_dependencies() -> int:
+    """Install dependencies using pip install --user."""
+    try:
+        # Install from requirements.txt
+        result = subprocess.run([
+            sys.executable, "-m", "pip", "install", "--user", "-r", "requirements.txt"
+        ], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print("Dependencies installed successfully")
+            return 0
+        else:
+            print(f"Error installing dependencies: {result.stderr}")
+            return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+def process_urls(url_file: str) -> int:
+    """Process CSV file with code, dataset, and model links."""
+    try:
+        # Import our main processing function
+        sys.path.append('src')
+        import contextlib
+        import csv
+        import io
+        import json
+
+        from main import calculate_all_scores, extract_model_name
+        
+        with open(url_file, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+        
+        # Parse CSV content
+        csv_reader = csv.reader(io.StringIO(content))
+        
+        for row in csv_reader:
+            if not row:
+                continue
+                
+            # Handle rows with fewer than 3 columns by padding with empty strings
+            while len(row) < 3:
+                row.append("")
+                
+            code_link = row[0].strip() if row[0] else ""
+            dataset_link = row[1].strip() if row[1] else ""
+            model_link = row[2].strip() if row[2] else ""
+            
+            # Skip rows where all fields are empty
+            if not any([code_link, dataset_link, model_link]):
+                continue
+            
+            # Only process rows that have a model link
+            if model_link:
+                # Suppress debug prints by redirecting stdout temporarily
+                stdout_capture = io.StringIO()
+                with contextlib.redirect_stdout(stdout_capture):
+                    result = calculate_all_scores(code_link, dataset_link, model_link)
+                
+                print(json.dumps(result, separators=(',', ':')))
+        
+        return 0
+    except Exception as e:
+        print(f"Error processing URLs: {e}", file=sys.stderr)
+        return 1
+
+def run_tests() -> int:
+    """Run test suite and report coverage."""
+    try:
+        # Run tests without coverage (since pytest-cov isn't installed)
+        # Add timeout to prevent hanging
+        result = subprocess.run([
+            sys.executable, "-m", "pytest", "tests/", "--tb=short"
+        ], capture_output=True, text=True, timeout=300)  # 5 minute timeout
+        
+        # Extract the exact pytest summary line
+        lines = result.stdout.split('\n')
+        summary_line = ""
+        
+        # Look for the summary line that contains test results
+        for line in lines:
+            if "failed" in line and "passed" in line and "skipped" in line and "=" in line:
+                summary_line = line.strip()
+                break
+        
+        if summary_line:
+            print(summary_line)
+        else:
+            print("Test results could not be parsed")
+        return 0 if result.returncode == 0 else 1
+        
+    except subprocess.TimeoutExpired:
+        print("Error: Tests timed out after 5 minutes", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error running tests: {e}", file=sys.stderr)
+        return 1
+
+def main() -> int:
+    """Main CLI entry point."""
+    if len(sys.argv) < 2:
+        print("Usage: ./run <command>")
+        print("Commands:")
+        print("  install - Install dependencies")
+        print("  test - Run test suite")
+        print("  <url_file> - Process URLs from file")
+        return 1
+    
+    command = sys.argv[1]
+    
+    if command == "install":
+        return install_dependencies()
+    elif command == "test":
+        return run_tests()
+    else:
+        # Assume it's a URL file
+        if os.path.exists(command):
+            return process_urls(command)
+        else:
+            print(f"Error: File '{command}' not found", file=sys.stderr)
+            return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
