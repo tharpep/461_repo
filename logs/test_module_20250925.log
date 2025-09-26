@@ -234,3 +234,7 @@ NoneType: None
 2025-09-25 19:37:30 - test_module - ERROR - logging_config.py:257 - Error in test_context: Test error
 NoneType: None
 2025-09-25 19:37:30 - test_module - DEBUG - logging_config.py:222 - Calling test_function with args: {'arg1': 'value1'}
+2025-09-25 20:53:17 - test_module - INFO - logging_config.py:240 - Performance: test_operation completed in 1.234s
+2025-09-25 20:53:17 - test_module - ERROR - logging_config.py:257 - Error in test_context: Test error
+NoneType: None
+2025-09-25 20:53:17 - test_module - DEBUG - logging_config.py:222 - Calling test_function with args: {'arg1': 'value1'}
