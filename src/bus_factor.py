@@ -1,4 +1,5 @@
 import re
+import time
 
 import requests
 
@@ -47,7 +48,7 @@ def get_huggingface_contributors(model_id: str) -> int:
         return 0
 
 
-def bus_factor_score(model_id: str) -> int:
+def bus_factor_score(model_id: str) -> tuple[int, float]:
     """
     Calculate the bus factor score based on the number of unique contributors
     to a Hugging Face model as shown in the Hugging Face UI.
@@ -57,15 +58,18 @@ def bus_factor_score(model_id: str) -> int:
                  (e.g., "moonshotai/Kimi-K2-Instruct-0905")
 
     Returns:
-        int: Number of unique contributors from Hugging Face Files page
+        tuple[int, float]: (Number of unique contributors, execution time)
     """
-    # Get contributors directly from Hugging Face Files page
-    return get_huggingface_contributors(model_id)
+    start_time = time.time()
+    contributors = get_huggingface_contributors(model_id)
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    return contributors, execution_time
 
 
 # Test the function
 if __name__ == "__main__":
-    import time
 
     print("Testing bus factor calculation...")
 
