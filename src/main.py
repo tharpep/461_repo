@@ -22,7 +22,6 @@ def extract_model_name(model_url: str) -> str:
     """Extract model name from Hugging Face URL."""
     if not model_url or model_url.strip() == "":
         return "unknown"
-    
     # Handle different URL formats
     if "huggingface.co/" in model_url:
         # For URLs like https://huggingface.co/microsoft/DialoGPT-medium
@@ -42,7 +41,7 @@ def extract_model_name(model_url: str) -> str:
         if len(parts) >= 2:
             # Return organization/model format
             return "/".join(parts[-2:])
-    
+
     return model_url.strip()
 
 
@@ -81,7 +80,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
     # Calculate each score with timing
     try:
         # License Score
-        license_score, license_latency = license_sub_score.license_sub_score(model_name)
+        license_score, license_latency = license_sub_score.license_sub_score(
+            model_name)
         result["license"] = license_score
         result["license_latency"] = int(license_latency * 1000)
     except Exception as e:
@@ -99,7 +99,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
               file=sys.stderr)
     try:
         # Ramp Up Score
-        ramp_score, ramp_latency = ramp_up_sub_score.ramp_up_time_score(model_name)
+        ramp_score, ramp_latency = ramp_up_sub_score.ramp_up_time_score(
+            model_name)
         result["ramp_up_time"] = ramp_score
         result["ramp_up_time_latency"] = int(ramp_latency * 1000)
     except Exception as e:
@@ -107,8 +108,9 @@ def calculate_all_scores(code_link: str, dataset_link: str,
               file=sys.stderr)
     try:
         # Performance Claims Score
-        perf_score, perf_latency = performance_claims_sub_score.performance_claims_sub_score(
-            model_name)
+        perf_score, perf_latency = (
+            performance_claims_sub_score.performance_claims_sub_score(
+                model_name))
         result["performance_claims"] = perf_score
         result["performance_claims_latency"] = int(perf_latency * 1000)
     except Exception as e:
@@ -116,8 +118,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
               file=sys.stderr)
     try:
         # Dataset Quality Score
-        dataset_score, dataset_latency = dataset_quality_sub_score.dataset_quality_sub_score(
-            model_name)
+        dataset_score, dataset_latency = (
+            dataset_quality_sub_score.dataset_quality_sub_score(model_name))
         result["dataset_quality"] = dataset_score
         result["dataset_quality_latency"] = int(dataset_latency * 1000)
     except Exception as e:
