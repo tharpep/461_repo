@@ -23,19 +23,25 @@ def extract_model_name(model_url: str) -> str:
     if not model_url or model_url.strip() == "":
         return "unknown"
     # Handle different URL formats
-    if "/" in model_url:
+    if "huggingface.co/" in model_url:
+        # For URLs like https://huggingface.co/microsoft/DialoGPT-medium
+        # Extract everything after huggingface.co/
+        parts = model_url.split("huggingface.co/")
+        if len(parts) > 1:
+            model_path = parts[1]
+            # Remove any additional path components like /tree/main
+            if "/tree/" in model_path:
+                model_path = model_path.split("/tree/")[0]
+            elif "/blob/" in model_path:
+                model_path = model_path.split("/blob/")[0]
+            return model_path
+    elif "/" in model_url:
+        # For direct model IDs like microsoft/DialoGPT-medium
         parts = model_url.split("/")
         if len(parts) >= 2:
-            # For URLs like /openai/whisper-tiny/tree/main, want "whisper-tiny"
-            if len(parts) >= 3 and parts[-2] == "tree":
-                return parts[-3]  # Get the model name part (whisper-tiny)
-            elif len(parts) >= 2:
-                # For URLs like /google-bert/bert-base-uncased, get last part
-                model_name = parts[-1]
-                # Remove any path components like /tree/main
-                if "/" in model_name:
-                    model_name = model_name.split("/")[0]
-                return model_name
+            # Return organization/model format
+            return "/".join(parts[-2:])
+
     return model_url.strip()
 
 
@@ -74,85 +80,60 @@ def calculate_all_scores(code_link: str, dataset_link: str,
     # Calculate each score with timing
     try:
         # License Score
-        start_time = time.time()
-        license_score = license_sub_score.license_sub_score(model_link)
-        # Handle both single values and tuples
-        if isinstance(license_score, (list, tuple)):
-            result["license"] = (license_score[0]
-                                 if len(license_score) > 0 else 0.0)
-        else:
-            result["license"] = float(license_score) if license_score else 0.0
-        result["license_latency"] = int(
-            (time.time() - start_time) * 1000)
+        license_score, license_latency = license_sub_score.license_sub_score(
+            model_name)
+        result["license"] = license_score
+        result["license_latency"] = int(license_latency * 1000)
     except Exception as e:
         print(f"Error calculating license score for {model_name}: {e}",
               file=sys.stderr)
     try:
         # Bus Factor Score
-        start_time = time.time()
-        bus_score = bus_factor.bus_factor_score(model_link)
-        result["bus_factor"] = bus_score
-        result["bus_factor_latency"] = int(
-            (time.time() - start_time) * 1000)
+        bus_score_raw, bus_latency = bus_factor.bus_factor_score(model_name)
+        # Normalize bus factor: cap at 20 contributors, then scale to 0-1
+        bus_score_normalized = min(bus_score_raw / 20.0, 1.0)
+        result["bus_factor"] = bus_score_normalized
+        result["bus_factor_latency"] = int(bus_latency * 1000)
     except Exception as e:
         print(f"Error calculating bus factor for {model_name}: {e}",
               file=sys.stderr)
     try:
         # Ramp Up Score
-        start_time = time.time()
-        ramp_score, _ = ramp_up_sub_score.ramp_up_time_score(model_link)
+        ramp_score, ramp_latency = ramp_up_sub_score.ramp_up_time_score(
+            model_name)
         result["ramp_up_time"] = ramp_score
-        result["ramp_up_time_latency"] = int(
-            (time.time() - start_time) * 1000)
+        result["ramp_up_time_latency"] = int(ramp_latency * 1000)
     except Exception as e:
         print(f"Error calculating ramp up score for {model_name}: {e}",
               file=sys.stderr)
     try:
         # Performance Claims Score
-        start_time = time.time()
-        perf_score = performance_claims_sub_score.performance_claims_sub_score(
-            model_link)
-        # Handle both single values and tuples
-        if isinstance(perf_score, (list, tuple)):
-            result["performance_claims"] = (perf_score[0]
-                                            if len(perf_score) > 0 else 0.0)
-        else:
-            result["performance_claims"] = (float(perf_score)
-                                            if perf_score else 0.0)
-        result["performance_claims_latency"] = int(
-            (time.time() - start_time) * 1000)
+        perf_score, perf_latency = (
+            performance_claims_sub_score.performance_claims_sub_score(
+                model_name))
+        result["performance_claims"] = perf_score
+        result["performance_claims_latency"] = int(perf_latency * 1000)
     except Exception as e:
         print(f"Error calculating performance claims for {model_name}: {e}",
               file=sys.stderr)
     try:
         # Dataset Quality Score
-        start_time = time.time()
-        dataset_score = dataset_quality_sub_score.dataset_quality_sub_score(
-            dataset_link)
-        # Handle both single values and tuples
-        if isinstance(dataset_score, (list, tuple)):
-            result["dataset_quality"] = (dataset_score[0]
-                                         if len(dataset_score) > 0 else 0.0)
-        else:
-            result["dataset_quality"] = (float(dataset_score)
-                                         if dataset_score else 0.0)
-        result["dataset_quality_latency"] = int(
-            (time.time() - start_time) * 1000)
+        dataset_score, dataset_latency = (
+            dataset_quality_sub_score.dataset_quality_sub_score(model_name))
+        result["dataset_quality"] = dataset_score
+        result["dataset_quality_latency"] = int(dataset_latency * 1000)
     except Exception as e:
         print(f"Error calculating dataset quality for {model_name}: {e}",
               file=sys.stderr)
     try:
         # Available Dataset Code Score
-        start_time = time.time()
-        code_score, _ = (
+        code_score, code_latency = (
             available_dataset_code_score.available_dataset_code_score(
-                model_link))
+                model_name))
         result["code_quality"] = code_score
-        result["code_quality_latency"] = int(
-            (time.time() - start_time) * 1000)
+        result["code_quality_latency"] = int(code_latency * 1000)
         result["dataset_and_code_score"] = code_score  # Same as code_quality
-        result["dataset_and_code_score_latency"] = int(
-            (time.time() - start_time) * 1000)
+        result["dataset_and_code_score_latency"] = int(code_latency * 1000)
     except Exception as e:
         print(f"Error calculating code quality for {model_name}: {e}",
               file=sys.stderr)
@@ -160,7 +141,7 @@ def calculate_all_scores(code_link: str, dataset_link: str,
         # Net Score (calculated from all other scores)
         start_time = time.time()
         net_score_result = net_score_calculator.calculate_net_score(
-            model_link)
+            model_name)
         # Extract just the numeric score from the result
         if (isinstance(net_score_result, dict) and
                 "net_score" in net_score_result):
