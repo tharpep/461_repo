@@ -46,12 +46,17 @@ class TestBusFactorScore(unittest.TestCase):
 
             execution_time = end_time - start_time
 
-            print(f"  Result: {result} contributors")
+            print(f"  Result: {result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
             # Assert that we get a valid result
-            self.assertIsInstance(result, int)
-            self.assertGreaterEqual(result, 0)
+            self.assertIsInstance(result, tuple)
+            self.assertEqual(len(result), 2)
+            contributors, latency = result
+            self.assertIsInstance(contributors, int)
+            self.assertIsInstance(latency, float)
+            self.assertGreaterEqual(contributors, 0)
+            self.assertGreaterEqual(latency, 0)
 
             # Assert reasonable execution time (should be under 10 seconds)
             self.assertLess(execution_time, 10.0,
@@ -78,18 +83,21 @@ class TestBusFactorScore(unittest.TestCase):
             execution_time = end_time - start_time
 
             print(f"  Expected: {expected_result} contributors")
-            print(f"  Actual: {actual_result} contributors")
+            print(f"  Actual: {actual_result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
             # Assert correctness
-            self.assertEqual(actual_result, expected_result,
+            contributors, latency = actual_result
+            self.assertEqual(contributors, expected_result,
                              f"Contributor count mismatch for {model_id}. "
                              f"Expected: {expected_result}, "
-                             f"Got: {actual_result}")
+                             f"Got: {contributors}")
 
             # Also assert basic validity
-            self.assertIsInstance(actual_result, int)
-            self.assertGreaterEqual(actual_result, 0)
+            self.assertIsInstance(contributors, int)
+            self.assertGreaterEqual(contributors, 0)
+            self.assertIsInstance(latency, float)
+            self.assertGreaterEqual(latency, 0)
 
     def test_get_huggingface_contributors_timing(self) -> None:
         """Test get_huggingface_contributors function and measure execution."""
@@ -135,11 +143,12 @@ class TestBusFactorScore(unittest.TestCase):
             end_time = time.time()
 
             execution_time = end_time - start_time
-            print(f"  Result: {result} contributors")
+            print(f"  Result: {result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
             # Should return 0 for invalid models
-            self.assertEqual(result, 0)
+            contributors, latency = result
+            self.assertEqual(contributors, 0)
 
     def test_performance_benchmark(self) -> None:
         """Run a performance benchmark with multiple iterations."""
@@ -163,7 +172,7 @@ class TestBusFactorScore(unittest.TestCase):
             execution_time = end_time - start_time
             times.append(execution_time)
 
-            print(f"  Result: {result} contributors")
+            print(f"  Result: {result[0]} contributors")
             print(f"  Time: {execution_time:.3f} seconds")
 
         # Calculate statistics
