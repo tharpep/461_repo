@@ -52,12 +52,11 @@ def calculate_net_score(model_id: str) -> ProjectMetadata:
           f"(latency: {ramp_up_latency:.3f}s)")
 
     # Bus Factor Score (0.05 weight) - normalize to 0-1 range
-    bus_factor_raw = bus_factor_score(model_id)
+    bus_factor_raw, bus_factor_latency = bus_factor_score(model_id)
     # Normalize bus factor: cap at 20 contributors, then scale to 0-1
     bus_factor = min(bus_factor_raw / 20.0, 1.0)
-    bus_factor_latency = 0  # Bus factor doesn't return timing
     print(f"Bus Factor: {bus_factor:.3f} (raw: {bus_factor_raw}) "
-          f"(latency: {bus_factor_latency}ms)")
+          f"(latency: {bus_factor_latency:.3f}s)")
 
     # Dataset & Code Score (0.15 weight)
     dataset_code_score, dataset_code_latency = available_dataset_code_score(
@@ -109,7 +108,7 @@ def calculate_net_score(model_id: str) -> ProjectMetadata:
         ramp_up_time=ramp_up_score,
         ramp_up_time_latency=int(ramp_up_latency * 1000),
         bus_factor=bus_factor,
-        bus_factor_latency=bus_factor_latency,
+        bus_factor_latency=int(bus_factor_latency * 1000),
         performance_claims=performance_claims,
         performance_claims_latency=int(performance_claims_latency * 1000),
         license=license_score,

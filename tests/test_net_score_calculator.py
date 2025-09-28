@@ -115,8 +115,8 @@ class TestNetScoreCalculator(unittest.TestCase):
             # + 0.15 * 0.6 (dataset_quality) + 0.1 * 0.5 (code_quality)
             # + 0.1 * 0.7 (performance)
             expected_score = (0.05 * 0.5 + 0.2 * 1.0 + 0.2 * 0.5 +
-                             0.05 * 0.2 + 0.15 * 0.8 + 0.15 * 0.6 +
-                             0.1 * 0.5 + 0.1 * 0.7)
+                              0.05 * 0.2 + 0.15 * 0.8 + 0.15 * 0.6 +
+                              0.1 * 0.5 + 0.1 * 0.7)
 
             self.assertAlmostEqual(results["net_score"], expected_score,
                                    places=3)
