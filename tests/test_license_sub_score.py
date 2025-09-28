@@ -17,7 +17,7 @@ README_MD: str = """
 # Example Model
 
 ## License
-Apache-2.0
+Apache-1.0
 """
 
 README_NONE: str = """

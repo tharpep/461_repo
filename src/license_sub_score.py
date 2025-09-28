@@ -12,7 +12,7 @@ import requests
 COMPATIBLE_LICENSES = {
     'gpl-2.0', 'gpl-3.0', 'lgpl-2.1', 'artistic-2.0', 'mit', 'bsl-1.0',
     'bsd-3-clause', 'cc0-1.0', 'cc-by-4.0', 'wtfpl', 'isc', 'ncsa',
-    'unlicense', 'zlib',
+    'unlicense', 'zlib', 'apache-2.0',
 }
 
 
