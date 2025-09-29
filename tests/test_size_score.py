@@ -9,17 +9,14 @@ Tests cover:
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+from src.size_score import (MEMORY_BENCHMARKS, calculate_size_scores,
+                            extract_memory_sizes, find_smallest_model_size,
+                            score_against_benchmark, size_score)
+
 # from typing import Any  # Not used in this test file
 
-from src.size_score import (
-    extract_memory_sizes,
-    find_smallest_model_size,
-    score_against_benchmark,
-    calculate_size_scores,
-    size_score,
-    MEMORY_BENCHMARKS
-)
 
 
 class TestMemoryExtraction(unittest.TestCase):

@@ -67,8 +67,9 @@ def fetch_readme(model_url: str) -> Optional[str]:
         README content as string, or None if fetch fails
     """
     try:
-        import requests
         from urllib.parse import urljoin
+
+        import requests
 
         # Handle different URL formats
         if 'huggingface.co' in model_url:
