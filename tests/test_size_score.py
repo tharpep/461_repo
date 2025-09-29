@@ -18,7 +18,6 @@ from src.size_score import (MEMORY_BENCHMARKS, calculate_size_scores,
 # from typing import Any  # Not used in this test file
 
 
-
 class TestMemoryExtraction(unittest.TestCase):
     """Test memory size extraction from README text."""
 
