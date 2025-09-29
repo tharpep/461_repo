@@ -129,7 +129,7 @@ def calculate_all_scores(code_link: str, dataset_link: str,
         # Available Dataset Code Score
         code_score, code_latency = (
             available_dataset_code_score.available_dataset_code_score(
-                model_name))
+                model_name, code_link, dataset_link))
         result["code_quality"] = code_score
         result["code_quality_latency"] = int(code_latency * 1000)
         result["dataset_and_code_score"] = code_score  # Same as code_quality

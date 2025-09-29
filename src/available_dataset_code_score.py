@@ -84,15 +84,18 @@ def detect_code_examples(readme_text: str) -> bool:
     return False
 
 
-def available_dataset_code_score(model_id: str) -> Tuple[float, float]:
+def available_dataset_code_score(model_id: str, code_link: str = "",
+                                 dataset_link: str = "") -> Tuple[
+                                     float, float]:
     """
-    Calculate Available Dataset and Code Score:
-    - 0 if neither dataset links nor code examples are present
-    - 0.5 if only one is present (dataset OR code)
-    - 1 if both are present (dataset AND code)
+    Calculate Available Dataset and Code Score.
 
+    Uses external links when provided (full score), falls back to README
+    analysis with penalty.
     Args:
         model_id: Hugging Face model ID (e.g., "tencent/SRPO")
+        code_link: External GitHub/code repository link (optional)
+        dataset_link: External dataset link (optional)
 
     Returns:
         Tuple of (score, execution_time)
@@ -103,7 +106,19 @@ def available_dataset_code_score(model_id: str) -> Tuple[float, float]:
         end_time = time.time()
         return (0.0, end_time - start_time)
 
-    # Fetch README content
+    # Check external links first (full score if provided)
+    has_external_code = bool(code_link and code_link.strip())
+    has_external_dataset = bool(dataset_link and dataset_link.strip())
+    if has_external_code and has_external_dataset:
+        # Both external links provided - full score
+        end_time = time.time()
+        return (1.0, end_time - start_time)
+    elif has_external_code or has_external_dataset:
+        # One external link provided - good score
+        end_time = time.time()
+        return (0.5, end_time - start_time)
+
+    # No external links - fall back to README analysis with penalty
     readme_text = fetch_readme(model_id.strip())
 
     if not readme_text:
@@ -112,15 +127,15 @@ def available_dataset_code_score(model_id: str) -> Tuple[float, float]:
             print(f"[ERROR] Failed to fetch README for model: {model_id}")
         return (0.0, end_time - start_time)
 
-    # Detect dataset links and code examples
+    # Detect dataset links and code examples in README
     has_dataset = detect_dataset_links(readme_text)
     has_code = detect_code_examples(readme_text)
 
-    # Calculate score based on presence
+    # Apply severe penalty for not having external links
     if has_dataset and has_code:
-        score = 1.0
+        score = 0.1  # Severe penalty: was 1.0, now 0.1
     elif has_dataset or has_code:
-        score = 0.5
+        score = 0.05  # Severe penalty: was 0.5, now 0.05
     else:
         score = 0.0
 
@@ -128,8 +143,10 @@ def available_dataset_code_score(model_id: str) -> Tuple[float, float]:
     execution_time = end_time - start_time
 
     if int(os.getenv("LOG_LEVEL", "0")) > 0:
-        print(f"[INFO] Dataset detected: {has_dataset}, "
-              f"Code detected: {has_code}, Score: {score}")
+        print(f"[INFO] External links: code={has_external_code}, "
+              f"dataset={has_external_dataset}")
+        print(f"[INFO] README analysis: dataset={has_dataset}, "
+              f"code={has_code}, Score: {score}")
 
     return (score, execution_time)
 
