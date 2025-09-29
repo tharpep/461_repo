@@ -46,12 +46,16 @@ def extract_model_name(model_url: str) -> str:
 
 
 def calculate_all_scores(code_link: str, dataset_link: str,
-                         model_link: str) -> Dict[str, Any]:
+                         model_link: str, encountered_datasets: set[str],
+                         encountered_code: set[str]) -> Dict[str, Any]:
     """Calculate all scores for a given set of links."""
     model_name = extract_model_name(model_link)
+    # Extract just the model name (without organization) for JSON display
+    display_name = (model_name.split('/')[-1] if '/' in model_name
+                    else model_name)
     # Initialize result with model info
     result = {
-        "name": model_name,
+        "name": display_name,
         "category": "MODEL",
         "net_score": 0.0,
         "net_score_latency": 0,
@@ -119,7 +123,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
     try:
         # Dataset Quality Score
         dataset_score, dataset_latency = (
-            dataset_quality_sub_score.dataset_quality_sub_score(model_name))
+            dataset_quality_sub_score.dataset_quality_sub_score(
+                model_name, dataset_link, encountered_datasets))
         result["dataset_quality"] = dataset_score
         result["dataset_quality_latency"] = int(dataset_latency * 1000)
     except Exception as e:
@@ -129,7 +134,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
         # Available Dataset Code Score
         code_score, code_latency = (
             available_dataset_code_score.available_dataset_code_score(
-                model_name, code_link, dataset_link))
+                model_name, code_link, dataset_link, encountered_datasets,
+                encountered_code))
         result["code_quality"] = code_score
         result["code_quality_latency"] = int(code_latency * 1000)
         result["dataset_and_code_score"] = code_score  # Same as code_quality
@@ -192,6 +198,11 @@ def main() -> int:
         print("Example: model_scorer input.csv")
         return 1
     input_file = sys.argv[1]
+
+    # Track encountered datasets and code across all models
+    encountered_datasets: set[str] = set()
+    encountered_code: set[str] = set()
+
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             content = f.read().strip()
@@ -220,8 +231,9 @@ def main() -> int:
                 stdout_capture = io.StringIO()
                 with contextlib.redirect_stdout(stdout_capture):
                     # Calculate scores
-                    result = calculate_all_scores(code_link, dataset_link,
-                                                  model_link)
+                    result = calculate_all_scores(
+                        code_link, dataset_link, model_link,
+                        encountered_datasets, encountered_code)
                 # Output clean JSON result (no extra whitespace)
                 print(json.dumps(result, separators=(',', ':')))
         # If we get here, all URLs were processed successfully

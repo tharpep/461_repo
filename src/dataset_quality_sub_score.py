@@ -274,7 +274,61 @@ def evaluate_reproducibility(readme_text: Optional[str]) -> float:
     return min(1.0, score)
 
 
-def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
+def extract_dataset_identifier(dataset_link: str) -> str:
+    """Extract a unique identifier from a dataset link."""
+    if not dataset_link:
+        return ""
+
+    # Handle Hugging Face dataset links
+    if "huggingface.co/datasets/" in dataset_link:
+        # Extract dataset name from URL like
+        # https://huggingface.co/datasets/bookcorpus/bookcorpus
+        parts = dataset_link.split("/datasets/")
+        if len(parts) > 1:
+            return parts[1].strip("/")
+
+    # Handle other dataset links - use domain + path
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(dataset_link)
+        return f"{parsed.netloc}{parsed.path}".strip("/")
+    except Exception:
+        return dataset_link.lower().strip()
+
+
+def check_readme_for_known_datasets(readme: str,
+                                    encountered_datasets: set[str]) -> bool:
+    """Check if README mentions any previously encountered datasets."""
+    if not readme or not encountered_datasets:
+        return False
+
+    readme_lower = readme.lower()
+
+    for dataset_id in encountered_datasets:
+        # Check for various forms of the dataset identifier
+        dataset_lower = dataset_id.lower()
+
+        # Direct mention
+        if dataset_lower in readme_lower:
+            return True
+
+        # Check for parts of the dataset name
+        dataset_parts = dataset_lower.replace("/", " ").replace(
+            "-", " ").replace("_", " ").split()
+        if len(dataset_parts) >= 2:
+            # Check if multiple parts are mentioned
+            parts_found = sum(1 for part in dataset_parts
+                              if len(part) > 3 and part in readme_lower)
+            if parts_found >= 2:
+                return True
+
+    return False
+
+
+def dataset_quality_sub_score(model_id: str, dataset_link: str = "",
+                              encountered_datasets: set[str] | None = None
+                              ) -> Tuple[
+                                  float, float]:
     """
     Calculate dataset quality sub-score based on README analysis.
 
@@ -287,12 +341,41 @@ def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
 
     Args:
         model_id: The Hugging Face model ID
+        dataset_link: External dataset link (optional)
+        encountered_datasets: Set of previously encountered dataset IDs
 
     Returns:
         Tuple[float, float]: (score, elapsed_time) where score is between
         0.0 and 1.0
     """
     start_time = time.time()
+
+    if encountered_datasets is None:
+        encountered_datasets = set()
+
+    # Check if dataset is available (external link OR reference to earlier)
+    has_external_dataset = bool(dataset_link and dataset_link.strip())
+    dataset_available = has_external_dataset
+
+    # If no external dataset link, check README for references to known
+    # datasets
+    if not has_external_dataset:
+        readme = fetch_readme(model_id)
+        if readme and encountered_datasets:
+            # Check if README references any previously encountered datasets
+            dataset_available = check_readme_for_known_datasets(
+                readme, encountered_datasets)
+
+    # If no dataset is available, return 0.0
+    if not dataset_available:
+        end_time = time.time()
+        return (0.0, end_time - start_time)
+
+    # Add external dataset to encountered set for future models
+    if has_external_dataset:
+        dataset_id = extract_dataset_identifier(dataset_link)
+        if dataset_id:
+            encountered_datasets.add(dataset_id)
 
     # Fetch README
     readme = fetch_readme(model_id)
