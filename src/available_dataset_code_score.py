@@ -181,8 +181,7 @@ def available_dataset_code_score(model_id: str, code_link: str = "",
                                  dataset_link: str = "",
                                  encountered_datasets: Optional[Set[str]] = None,
                                  encountered_code: Optional[Set[str]] = None
-                                 ) -> Tuple[
-                                     float, float]:
+                                 ) -> Tuple[float, float]:
     """
     Calculate Available Dataset and Code Score.
 
@@ -220,7 +219,6 @@ def available_dataset_code_score(model_id: str, code_link: str = "",
     # Initialize known references
     has_known_dataset = False
     has_known_code = False
-    
     # If no external links, check README for references to known resources
     if not has_external_dataset or not has_external_code:
         readme_text = fetch_readme(model_id.strip())
@@ -231,7 +229,6 @@ def available_dataset_code_score(model_id: str, code_link: str = "",
                 dataset_available = detect_dataset_links(readme_text)
             if not has_external_code:
                 code_available = detect_code_examples(readme_text)
-            
             # Also check for references to known resources
             has_known_dataset, has_known_code = (
                 check_readme_for_known_resources(
