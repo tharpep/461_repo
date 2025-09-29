@@ -10,7 +10,7 @@ Tests cover:
 
 import unittest
 from unittest.mock import patch, MagicMock
-from typing import Dict, List
+# from typing import Any  # Not used in this test file
 
 from src.size_score import (
     extract_memory_sizes,
@@ -127,7 +127,7 @@ class TestBenchmarkScoring(unittest.TestCase):
         # 12 GB model vs 16 GB benchmark = 75% → score 0.5
         score = score_against_benchmark(12.0, 16.0)
         self.assertEqual(score, 0.5)
-        
+
         # 15.9 GB model vs 16 GB benchmark = 99.4% → score 0.5
         score = score_against_benchmark(15.9, 16.0)
         self.assertEqual(score, 0.5)
@@ -152,12 +152,12 @@ class TestSizeScoreCalculation(unittest.TestCase):
         """Test calculation of scores for all hardware benchmarks."""
         # 7.2 GB model
         scores = calculate_size_scores(7.2)
-        
+
         self.assertIn('raspberry_pi', scores)
         self.assertIn('jetson_nano', scores)
         self.assertIn('desktop_gpu', scores)
         self.assertIn('high_end_gpu', scores)
-        
+
         # 7.2 GB vs 1 GB → 0.0
         self.assertEqual(scores['raspberry_pi'], 0.0)
         # 7.2 GB vs 2 GB → 0.0
@@ -173,7 +173,7 @@ class TestSizeScoreCalculation(unittest.TestCase):
         scores = calculate_size_scores(0.5)
         self.assertEqual(scores['raspberry_pi'], 1.0)  # 50%
         self.assertEqual(scores['jetson_nano'], 1.0)  # 25%
-        
+
         # Very large model (30 GB)
         scores = calculate_size_scores(30.0)
         self.assertEqual(scores['raspberry_pi'], 0.0)  # 3000%
@@ -186,7 +186,8 @@ class TestSizeScoreFunction(unittest.TestCase):
     """Test the main size_score function."""
 
     @patch('src.size_score.fetch_readme')
-    def test_successful_calculation(self, mock_fetch_readme: MagicMock) -> None:
+    def test_successful_calculation(
+            self, mock_fetch_readme: MagicMock) -> None:
         """Test successful size score calculation."""
         mock_readme = """
         # Model Information
@@ -194,9 +195,9 @@ class TestSizeScoreFunction(unittest.TestCase):
         Model size: 7.2 GB
         """
         mock_fetch_readme.return_value = mock_readme
-        
+
         scores, latency = size_score("https://huggingface.co/test/model")
-        
+
         self.assertIsInstance(scores, dict)
         self.assertIn('raspberry_pi', scores)
         self.assertIn('jetson_nano', scores)
@@ -209,20 +210,21 @@ class TestSizeScoreFunction(unittest.TestCase):
     def test_no_readme_content(self, mock_fetch_readme: MagicMock) -> None:
         """Test handling when README cannot be fetched."""
         mock_fetch_readme.return_value = None
-        
+
         scores, latency = size_score("https://huggingface.co/test/model")
-        
+
         self.assertEqual(scores, {})
         self.assertIsInstance(latency, float)
 
     @patch('src.size_score.fetch_readme')
-    def test_no_memory_info_in_readme(self, mock_fetch_readme: MagicMock) -> None:
+    def test_no_memory_info_in_readme(
+            self, mock_fetch_readme: MagicMock) -> None:
         """Test handling when README has no memory information."""
         mock_readme = "This is just regular text with no memory information."
         mock_fetch_readme.return_value = mock_readme
-        
+
         scores, latency = size_score("https://huggingface.co/test/model")
-        
+
         self.assertEqual(scores, {})
         self.assertIsInstance(latency, float)
 
@@ -232,25 +234,27 @@ class TestSizeScoreFunction(unittest.TestCase):
         mock_readme = """
         # Model Variants
         Small model: 3.6 GB
-        Medium model: 7.2 GB  
+        Medium model: 7.2 GB
         Large model: 14.4 GB
         """
         mock_fetch_readme.return_value = mock_readme
-        
+
         scores, latency = size_score("https://huggingface.co/test/model")
-        
+
         # Should use smallest size (3.6 GB)
         self.assertIsInstance(scores, dict)
         if scores:  # Only check if scores were calculated
             self.assertEqual(scores['raspberry_pi'], 0.0)  # 3.6 GB vs 1 GB
             self.assertEqual(scores['jetson_nano'], 0.0)   # 3.6 GB vs 2 GB
-            self.assertEqual(scores['desktop_gpu'], 1.0)  # 3.6 GB vs 16 GB (22.5%)
-            self.assertEqual(scores['high_end_gpu'], 1.0)  # 3.6 GB vs 24 GB (15%)
+            # 3.6 GB vs 16 GB (22.5%)
+            self.assertEqual(scores['desktop_gpu'], 1.0)
+            # 3.6 GB vs 24 GB (15%)
+            self.assertEqual(scores['high_end_gpu'], 1.0)
 
     def test_invalid_url(self) -> None:
         """Test handling of invalid URL."""
         scores, latency = size_score("invalid-url")
-        
+
         self.assertEqual(scores, {})
         self.assertIsInstance(latency, float)
 
@@ -263,11 +267,11 @@ class TestIntegration(unittest.TestCase):
         # Example: Model offers 7.2 GB and 14.4 GB versions
         # Smallest = 7.2 GB
         # Expected scores: [0, 0, 1, 1]
-        
+
         scores = calculate_size_scores(7.2)
-        
+
         self.assertEqual(scores['raspberry_pi'], 0.0)  # 7.2 GB ≥ 1 GB
-        self.assertEqual(scores['jetson_nano'], 0.0)   # 7.2 GB ≥ 2 GB  
+        self.assertEqual(scores['jetson_nano'], 0.0)   # 7.2 GB ≥ 2 GB
         self.assertEqual(scores['desktop_gpu'], 1.0)   # 7.2 GB < 75% of 16 GB
         self.assertEqual(scores['high_end_gpu'], 1.0)  # 7.2 GB < 75% of 24 GB
 
@@ -279,7 +283,7 @@ class TestIntegration(unittest.TestCase):
             'desktop_gpu': 16.0,
             'high_end_gpu': 24.0
         }
-        
+
         self.assertEqual(MEMORY_BENCHMARKS, expected_benchmarks)
 
 
