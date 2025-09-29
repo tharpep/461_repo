@@ -25,7 +25,7 @@ def get_huggingface_contributors(model_id: str) -> int:
             # Look for contributor count patterns in the Files page
             contributor_patterns = [
                 r'(\d+)\s+contributors?',
-                r'contributors?[^\"]*(\d+)',
+                r'contributors?\s+(\d+)',
                 r'\"contributors?\":\s*(\d+)',
             ]
 

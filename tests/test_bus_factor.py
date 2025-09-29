@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import unittest
+from unittest.mock import MagicMock, patch
 
 # Add the src directory to the path so we can import bus_factor
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -39,7 +40,6 @@ class TestBusFactorScore(unittest.TestCase):
         for model_id in self.test_models:
             print(f"\nTesting model: {model_id}")
 
-            # Measure execution time
             start_time = time.time()
             result = bus_factor_score(model_id)
             end_time = time.time()
@@ -49,7 +49,6 @@ class TestBusFactorScore(unittest.TestCase):
             print(f"  Result: {result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
-            # Assert that we get a valid result
             self.assertIsInstance(result, tuple)
             self.assertEqual(len(result), 2)
             contributors, latency = result
@@ -58,7 +57,6 @@ class TestBusFactorScore(unittest.TestCase):
             self.assertGreaterEqual(contributors, 0)
             self.assertGreaterEqual(latency, 0)
 
-            # Assert reasonable execution time (should be under 10 seconds)
             self.assertLess(execution_time, 10.0,
                             f"Function took too long: {execution_time:.3f}s")
 
@@ -71,29 +69,24 @@ class TestBusFactorScore(unittest.TestCase):
         for model_id in self.test_models:
             print(f"\nTesting model: {model_id}")
 
-            # Get the actual result
             start_time = time.time()
             actual_result = bus_factor_score(model_id)
             end_time = time.time()
 
-            # Get expected result
-            expected_result = self.expected_contributors.get(
-                model_id, "Unknown")
-
+            expected_result = self.expected_contributors.get(model_id,
+                                                             "Unknown")
             execution_time = end_time - start_time
 
             print(f"  Expected: {expected_result} contributors")
             print(f"  Actual: {actual_result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
-            # Assert correctness
             contributors, latency = actual_result
             self.assertEqual(contributors, expected_result,
                              f"Contributor count mismatch for {model_id}. "
                              f"Expected: {expected_result}, "
                              f"Got: {contributors}")
 
-            # Also assert basic validity
             self.assertIsInstance(contributors, int)
             self.assertGreaterEqual(contributors, 0)
             self.assertIsInstance(latency, float)
@@ -108,7 +101,6 @@ class TestBusFactorScore(unittest.TestCase):
         for model_id in self.test_models:
             print(f"\nTesting model: {model_id}")
 
-            # Measure execution time
             start_time = time.time()
             result = get_huggingface_contributors(model_id)
             end_time = time.time()
@@ -118,7 +110,6 @@ class TestBusFactorScore(unittest.TestCase):
             print(f"  Result: {result} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
-            # Assert that we get a valid result
             self.assertIsInstance(result, int)
             self.assertGreaterEqual(result, 0)
 
@@ -146,7 +137,6 @@ class TestBusFactorScore(unittest.TestCase):
             print(f"  Result: {result[0]} contributors")
             print(f"  Execution time: {execution_time:.3f} seconds")
 
-            # Should return 0 for invalid models
             contributors, latency = result
             self.assertEqual(contributors, 0)
 
@@ -175,7 +165,6 @@ class TestBusFactorScore(unittest.TestCase):
             print(f"  Result: {result[0]} contributors")
             print(f"  Time: {execution_time:.3f} seconds")
 
-        # Calculate statistics
         avg_time = sum(times) / len(times)
         min_time = min(times)
         max_time = max(times)
@@ -186,9 +175,69 @@ class TestBusFactorScore(unittest.TestCase):
         print(f"  Max time: {max_time:.3f} seconds")
         print(f"  All results: {[f'{t:.3f}s' for t in times]}")
 
-        # Assert reasonable performance
         self.assertLess(avg_time, 5.0, "Average execution time too slow")
         self.assertLess(max_time, 10.0, "Maximum execution time too slow")
+
+    # =========================
+    # ADDED TESTS FOR EDGE CASES
+    # =========================
+
+    def test_regex_pattern_variations(self) -> None:
+        """Ensure all regex contributor patterns are parsed correctly."""
+        html_cases = [
+            ("<span>15 contributors</span>", 15),
+            ("some text contributors 12", 12),
+            ('"contributors": 27', 27),
+        ]
+
+        for html, expected in html_cases:
+            with patch("requests.get") as mock_get:
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.text = html
+                mock_get.return_value = mock_response
+
+                result = get_huggingface_contributors("fake/model")
+                self.assertEqual(result, expected)
+
+    def test_requests_exception(self) -> None:
+        """Simulate a requests exception and ensure 0 is returned."""
+        with patch("requests.get", side_effect=Exception("Network error")):
+            result = get_huggingface_contributors("any/model")
+            self.assertEqual(result, 0)
+
+    def test_no_match_returns_zero(self) -> None:
+        """Ensure no regex match returns 0 contributors."""
+        with patch("requests.get") as mock_get:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.text = "no contributors here"
+            mock_get.return_value = mock_response
+
+            result = get_huggingface_contributors("fake/model")
+            self.assertEqual(result, 0)
+
+    def test_non_200_status_code(self) -> None:
+        """Ensure non-200 status code returns 0 contributors."""
+        with patch("requests.get") as mock_get:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_response.text = "Not Found"
+            mock_get.return_value = mock_response
+
+            result = get_huggingface_contributors("fake/model")
+            self.assertEqual(result, 0)
+
+    def test_invalid_number_match(self) -> None:
+        """Ensure invalid number strings are ignored safely."""
+        with patch("requests.get") as mock_get:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.text = '<span>"contributors": notanumber</span>'
+            mock_get.return_value = mock_response
+
+            result = get_huggingface_contributors("fake/model")
+            self.assertEqual(result, 0)
 
 
 def run_timing_tests() -> bool:
@@ -196,14 +245,10 @@ def run_timing_tests() -> bool:
     print("Starting Bus Factor Score Unit Tests with Timing...")
     print("="*80)
 
-    # Create test suite
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBusFactorScore)
-
-    # Run tests with detailed output
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
 
-    # Print summary
     print("\n" + "="*80)
     print("TEST SUMMARY")
     print("="*80)

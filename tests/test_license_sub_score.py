@@ -17,7 +17,7 @@ README_MD: str = """
 # Example Model
 
 ## License
-Apache-2.0
+Apache-1.0
 """
 
 README_NONE: str = """
@@ -42,7 +42,7 @@ README_EMPTY: str = ""
         (README_YAML, 1),
         (README_MD, 0),
         (README_NONE, 0),
-        ("---\nlicense: Apache-2.0\n---", 0),
+        ("---\nlicense: Apache-1.0\n---", 0),
         ("---\nlicense: MIT License\n---", 1),
     ],
 )  # type: ignore[misc]
@@ -76,7 +76,7 @@ def test_extract_license_yaml() -> None:
 
 def test_extract_license_md() -> None:
     license_str: Optional[str] = license.extract_license(README_MD)
-    assert license_str == "apache-2.0"
+    assert license_str == "apache-1.0"
 
 
 def test_extract_license_none() -> None:
