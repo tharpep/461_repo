@@ -49,7 +49,8 @@ class LoggingConfig:
         try:
             verbosity = int(verbosity_str)
             if verbosity not in [0, 1, 2]:
-                raise ValueError(f"Verbosity must be 0, 1, or 2, got {verbosity}")
+                raise ValueError(
+                    f"Verbosity must be 0, 1, or 2, got {verbosity}")
             return verbosity
         except ValueError:
             return 0  # Default to silent
@@ -171,11 +172,11 @@ class LoggerManager:
         """Get or create a logger with the given name."""
         # Always recreate config to pick up environment changes
         self._config = LoggingConfig()
-        
+
         # Clear and recreate logger to apply new configuration
         if name in self._loggers:
             del self._loggers[name]
-            
+
         self._loggers[name] = self._config.setup_logger(name, correlation_id)
         return self._loggers[name]
 
