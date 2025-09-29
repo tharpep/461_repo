@@ -83,7 +83,18 @@ class PurdueGenAI:
                     response_data = json.loads(
                         response.read().decode('utf-8')
                     )
-                    return response_data["choices"][0]["message"]["content"]
+                    # Type-safe access to nested dictionary
+                    if (isinstance(response_data, dict) and 
+                        "choices" in response_data and 
+                        isinstance(response_data["choices"], list) and
+                        len(response_data["choices"]) > 0 and
+                        isinstance(response_data["choices"][0], dict) and
+                        "message" in response_data["choices"][0] and
+                        isinstance(response_data["choices"][0]["message"], dict) and
+                        "content" in response_data["choices"][0]["message"]):
+                        return str(response_data["choices"][0]["message"]["content"])
+                    else:
+                        raise Exception("Invalid response format from API")
                 else:
                     error_text = response.read().decode('utf-8')
                     raise Exception(
