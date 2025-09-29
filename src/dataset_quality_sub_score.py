@@ -1,6 +1,6 @@
 import re
 import time
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Set
 
 from src.license_sub_score import fetch_readme
 
@@ -491,7 +491,7 @@ def evaluate_curation_quality_hybrid(readme_text: Optional[str],
 
 
 def dataset_quality_sub_score(model_id: str, dataset_link: str = "",
-                              encountered_datasets: set[str] | None = None,
+                              encountered_datasets: Optional[Set[str]] = None,
                               use_ai: bool = True) -> Tuple[float, float]:
     """
     Calculate dataset quality sub-score based on README analysis with
