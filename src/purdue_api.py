@@ -32,11 +32,11 @@ class PurdueGenAI:
         Initialize Purdue GenAI client
         
         Args:
-            api_key: API key for Purdue GenAI Studio. If None, will try to load from PURDUE_API_KEY environment variable
+            api_key: API key for Purdue GenAI Studio. If None, will try to load from GEN_AI_STUDIO_API_KEY environment variable
         """
-        self.api_key = api_key or os.getenv('PURDUE_API_KEY')
+        self.api_key = api_key or os.getenv('GEN_AI_STUDIO_API_KEY')
         if not self.api_key:
-            raise ValueError("API key is required. Provide it directly or set PURDUE_API_KEY environment variable.")
+            raise ValueError("API key is required. Provide it directly or set GEN_AI_STUDIO_API_KEY environment variable.")
         self.base_url = "https://genai.rcac.purdue.edu/api/chat/completions"
     
     def chat(self, message: str, model: str = "llama3.1:latest") -> str:
@@ -88,16 +88,16 @@ class PurdueGenAI:
 # Example usage
 if __name__ == "__main__":
     # Debug: Check if environment variable is loaded
-    api_key = os.getenv('PURDUE_API_KEY')
+    api_key = os.getenv('GEN_AI_STUDIO_API_KEY')
     if api_key:
         print(f"✅ Found API key")
     else:
         print("❌ No API key found in environment variables")
-        print("Make sure your .env file contains: PURDUE_API_KEY=your-key-here")
+        print("Make sure your .env file contains: GEN_AI_STUDIO_API_KEY=your-key-here")
         exit(1)
     
     try:
-        client = PurdueGenAI()  # Uses PURDUE_API_KEY from environment
+        client = PurdueGenAI()  # Uses GEN_AI_STUDIO_API_KEY from environment
         response = client.chat("Hello! What is your name?")
         print(f"AI Response: {response}")
     except Exception as e:

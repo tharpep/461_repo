@@ -2,7 +2,63 @@ import re
 import time
 from typing import Optional, Tuple
 
-from license_sub_score import fetch_readme
+from src.license_sub_score import fetch_readme
+
+
+def _get_ai_score(readme_text: str, model_id: str, aspect: str) -> float:
+    """
+    Get AI score for a specific aspect of dataset quality.
+    
+    Args:
+        readme_text: README content
+        model_id: Model identifier
+        aspect: What to assess ('documentation', 'safety', or 'curation')
+        
+    Returns:
+        float: Score between 0.0 and 1.0, or 0.0 if AI unavailable
+    """
+    try:
+        from src.purdue_api import PurdueGenAI
+        
+        # Create prompts for different aspects
+        prompts = {
+            'documentation': f"""
+Analyze the documentation quality of this ML model README for "{model_id}".
+Rate 0.0-1.0 based on: dataset description, size/format info, usage instructions, technical details.
+README: {readme_text[:1500]}{'...' if len(readme_text) > 1500 else ''}
+Respond with only a number (e.g., 0.75):""",
+            
+            'safety': f"""
+Analyze safety/privacy considerations in this ML model README for "{model_id}".
+Rate 0.0-1.0 based on: privacy mentions, bias discussions, safety warnings, ethical considerations.
+README: {readme_text[:1500]}{'...' if len(readme_text) > 1500 else ''}
+Respond with only a number (e.g., 0.65):""",
+            
+            'curation': f"""
+Analyze curation/quality control in this ML model README for "{model_id}".
+Rate 0.0-1.0 based on: quality processes, validation methods, performance metrics, standards.
+README: {readme_text[:1500]}{'...' if len(readme_text) > 1500 else ''}
+Respond with only a number (e.g., 0.80):"""
+        }
+        
+        if aspect not in prompts:
+            return 0.0
+            
+        # Make AI call
+        client = PurdueGenAI()
+        response = client.chat(prompts[aspect])
+        
+        # Extract score from response
+        import re
+        match = re.search(r'(\d+\.?\d*)', response.strip())
+        if match:
+            score = float(match.group(1))
+            return min(1.0, max(0.0, score))
+        return 0.0
+        
+    except Exception:
+        # AI unavailable or failed, return 0.0
+        return 0.0
 
 
 def evaluate_dataset_documentation(readme_text: Optional[str]) -> float:
@@ -274,19 +330,113 @@ def evaluate_reproducibility(readme_text: Optional[str]) -> float:
     return min(1.0, score)
 
 
-def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
+def evaluate_dataset_documentation_hybrid(readme_text: Optional[str], model_id: str, use_ai: bool = True) -> float:
     """
-    Calculate dataset quality sub-score based on README analysis.
+    Hybrid evaluation of dataset documentation quality using deterministic + AI scoring.
+    
+    Args:
+        readme_text: The README content as string
+        model_id: Model identifier for AI context
+        use_ai: Whether to use AI enhancement
+        
+    Returns:
+        float: Score between 0.0 and 1.0 for documentation quality
+    """
+    # Get deterministic score
+    deterministic_score = evaluate_dataset_documentation(readme_text)
+    
+    # If no AI requested or no text, return deterministic score
+    if not use_ai or not readme_text:
+        return deterministic_score
+    
+    # Get AI score
+    ai_score = _get_ai_score(readme_text, model_id, 'documentation')
+    
+    # If AI failed (returned 0.0), use deterministic only
+    if ai_score == 0.0:
+        return deterministic_score
+    
+    # Weighted combination: 70% deterministic (reliable baseline), 30% AI (enhanced understanding)
+    hybrid_score = (deterministic_score * 0.7) + (ai_score * 0.3)
+    return min(1.0, hybrid_score)
+
+
+def evaluate_safety_privacy_hybrid(readme_text: Optional[str], model_id: str, use_ai: bool = True) -> float:
+    """
+    Hybrid evaluation of safety and privacy considerations using deterministic + AI scoring.
+    
+    Args:
+        readme_text: The README content as string
+        model_id: Model identifier for AI context
+        use_ai: Whether to use AI enhancement
+        
+    Returns:
+        float: Score between 0.0 and 1.0 for safety/privacy considerations
+    """
+    # Get deterministic score
+    deterministic_score = evaluate_safety_privacy(readme_text)
+    
+    # If no AI requested or no text, return deterministic score
+    if not use_ai or not readme_text:
+        return deterministic_score
+    
+    # Get AI score
+    ai_score = _get_ai_score(readme_text, model_id, 'safety')
+    
+    # If AI failed (returned 0.0), use deterministic only
+    if ai_score == 0.0:
+        return deterministic_score
+    
+    # Weighted combination: 60% deterministic, 40% AI (AI is better at nuanced safety assessment)
+    hybrid_score = (deterministic_score * 0.6) + (ai_score * 0.4)
+    return min(1.0, hybrid_score)
+
+
+def evaluate_curation_quality_hybrid(readme_text: Optional[str], model_id: str, use_ai: bool = True) -> float:
+    """
+    Hybrid evaluation of curation and quality control measures using deterministic + AI scoring.
+    
+    Args:
+        readme_text: The README content as string
+        model_id: Model identifier for AI context
+        use_ai: Whether to use AI enhancement
+        
+    Returns:
+        float: Score between 0.0 and 1.0 for curation quality
+    """
+    # Get deterministic score
+    deterministic_score = evaluate_curation_quality(readme_text)
+    
+    # If no AI requested or no text, return deterministic score
+    if not use_ai or not readme_text:
+        return deterministic_score
+    
+    # Get AI score
+    ai_score = _get_ai_score(readme_text, model_id, 'curation')
+    
+    # If AI failed (returned 0.0), use deterministic only
+    if ai_score == 0.0:
+        return deterministic_score
+    
+    # Weighted combination: 65% deterministic, 35% AI (AI can better assess quality descriptions)
+    hybrid_score = (deterministic_score * 0.65) + (ai_score * 0.35)
+    return min(1.0, hybrid_score)
+
+
+def dataset_quality_sub_score(model_id: str, use_ai: bool = True) -> Tuple[float, float]:
+    """
+    Calculate dataset quality sub-score based on README analysis with optional AI enhancement.
 
     Evaluates the 5 criteria from the dataset quality requirements:
-    - Documentation of the dataset (0.2 weight)
-    - Clarity of the license (0.2 weight)
-    - Safety/privacy considerations (0.2 weight)
-    - Curation/quality control measures (0.2 weight)
-    - Reproducibility (0.2 weight)
+    - Documentation of the dataset (0.2 weight) - AI-enhanced if available
+    - Clarity of the license (0.2 weight) - deterministic only
+    - Safety/privacy considerations (0.2 weight) - AI-enhanced if available
+    - Curation/quality control measures (0.2 weight) - AI-enhanced if available
+    - Reproducibility (0.2 weight) - deterministic only
 
     Args:
         model_id: The Hugging Face model ID
+        use_ai: Whether to use AI enhancement (default: True)
 
     Returns:
         Tuple[float, float]: (score, elapsed_time) where score is between
@@ -301,11 +451,13 @@ def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
         return (0.0, end_time - start_time)
 
     # Calculate all 5 dataset quality scores
-    doc_score = evaluate_dataset_documentation(readme)
-    license_score = evaluate_license_clarity(readme)
-    safety_score = evaluate_safety_privacy(readme)
-    curation_score = evaluate_curation_quality(readme)
-    repro_score = evaluate_reproducibility(readme)
+    # Use hybrid scoring for documentation, safety/privacy, and curation
+    # Keep deterministic for license clarity and reproducibility (regex works well for these)
+    doc_score = evaluate_dataset_documentation_hybrid(readme, model_id, use_ai)
+    license_score = evaluate_license_clarity(readme)  # Keep deterministic
+    safety_score = evaluate_safety_privacy_hybrid(readme, model_id, use_ai)
+    curation_score = evaluate_curation_quality_hybrid(readme, model_id, use_ai)
+    repro_score = evaluate_reproducibility(readme)  # Keep deterministic
 
     # Equal weighted combination (0.2 each for the 5 criteria)
     final_score = (
@@ -323,5 +475,35 @@ def dataset_quality_sub_score(model_id: str) -> Tuple[float, float]:
 if __name__ == "__main__":
     # Test with a sample model
     model_id = "google/gemma-2b"
-    score, elapsed = dataset_quality_sub_score(model_id)
-    print(f"Dataset quality score: {score:.3f} (elapsed: {elapsed:.3f}s)")
+    
+    print("=" * 60)
+    print("DATASET QUALITY SCORING TEST")
+    print("=" * 60)
+    print(f"Testing model: {model_id}")
+    print()
+    
+    # Test deterministic scoring
+    print("🔍 Deterministic scoring (regex-based):")
+    score_det, elapsed_det = dataset_quality_sub_score(model_id, use_ai=False)
+    print(f"  Score: {score_det:.3f}")
+    print(f"  Time: {elapsed_det:.3f}s")
+    print()
+    
+    # Test AI-enhanced scoring
+    print("🤖 AI-enhanced hybrid scoring:")
+    try:
+        score_ai, elapsed_ai = dataset_quality_sub_score(model_id, use_ai=True)
+        print(f"  Score: {score_ai:.3f}")
+        print(f"  Time: {elapsed_ai:.3f}s")
+        print(f"  Improvement: {score_ai - score_det:+.3f}")
+        
+        if score_ai > score_det:
+            print("  ✅ AI enhancement improved the score")
+        elif score_ai < score_det:
+            print("  ⚠️ AI enhancement lowered the score")
+        else:
+            print("  ➡️ AI enhancement had no effect (likely AI unavailable)")
+            
+    except Exception as e:
+        print(f"  ❌ AI enhancement failed: {e}")
+        print("  Make sure GEN_AI_STUDIO_API_KEY is set in your environment")

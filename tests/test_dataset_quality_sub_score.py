@@ -228,6 +228,76 @@ class TestReproducibilityEvaluation:
         assert score == 0.0
 
 
+class TestHybridEvaluation:
+    """Test hybrid evaluation functions."""
+
+    def test_evaluate_dataset_documentation_hybrid_no_ai(self) -> None:
+        """Test hybrid documentation scoring without AI."""
+        score = dataset_quality.evaluate_dataset_documentation_hybrid(
+            README_WITH_DOCUMENTATION, "test-model", use_ai=False
+        )
+        # Should be same as deterministic score
+        deterministic_score = dataset_quality.evaluate_dataset_documentation(
+            README_WITH_DOCUMENTATION
+        )
+        assert score == deterministic_score
+
+    def test_evaluate_safety_privacy_hybrid_no_ai(self) -> None:
+        """Test hybrid safety scoring without AI."""
+        score = dataset_quality.evaluate_safety_privacy_hybrid(
+            README_WITH_SAFETY, "test-model", use_ai=False
+        )
+        # Should be same as deterministic score
+        deterministic_score = dataset_quality.evaluate_safety_privacy(
+            README_WITH_SAFETY
+        )
+        assert score == deterministic_score
+
+    def test_evaluate_curation_quality_hybrid_no_ai(self) -> None:
+        """Test hybrid curation scoring without AI."""
+        score = dataset_quality.evaluate_curation_quality_hybrid(
+            README_WITH_CURATION, "test-model", use_ai=False
+        )
+        # Should be same as deterministic score
+        deterministic_score = dataset_quality.evaluate_curation_quality(
+            README_WITH_CURATION
+        )
+        assert score == deterministic_score
+
+    @patch("src.dataset_quality_sub_score._get_ai_score")
+    def test_evaluate_dataset_documentation_hybrid_with_ai(
+        self, mock_ai_score: Mock
+    ) -> None:
+        """Test hybrid documentation scoring with AI."""
+        mock_ai_score.return_value = 0.8
+        
+        score = dataset_quality.evaluate_dataset_documentation_hybrid(
+            README_WITH_DOCUMENTATION, "test-model", use_ai=True
+        )
+        
+        # Should be weighted combination of deterministic and AI scores
+        deterministic_score = dataset_quality.evaluate_dataset_documentation(
+            README_WITH_DOCUMENTATION
+        )
+        expected_score = (deterministic_score * 0.7) + (0.8 * 0.3)
+        assert abs(score - expected_score) < 0.001
+
+    @patch("src.dataset_quality_sub_score._get_ai_score")
+    def test_hybrid_ai_fallback(self, mock_ai_score: Mock) -> None:
+        """Test that hybrid functions fallback to deterministic when AI fails."""
+        mock_ai_score.return_value = 0.0  # AI failed
+        
+        score = dataset_quality.evaluate_dataset_documentation_hybrid(
+            README_WITH_DOCUMENTATION, "test-model", use_ai=True
+        )
+        
+        # Should fallback to deterministic score
+        deterministic_score = dataset_quality.evaluate_dataset_documentation(
+            README_WITH_DOCUMENTATION
+        )
+        assert score == deterministic_score
+
+
 class TestDatasetQualitySubScore:
     """Test the main dataset quality scoring function."""
 
@@ -304,6 +374,42 @@ class TestDatasetQualitySubScore:
         assert elapsed >= 0
         assert elapsed < 1.0  # Should be fast for mocked data
 
+    @patch("src.dataset_quality_sub_score.fetch_readme")
+    def test_dataset_quality_sub_score_no_ai(
+        self, mock_fetch_readme: Mock
+    ) -> None:
+        """Test dataset quality scoring without AI enhancement."""
+        mock_fetch_readme.return_value = README_COMPREHENSIVE
+
+        score_no_ai, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model", use_ai=False
+        )
+
+        assert 0.0 <= score_no_ai <= 1.0
+        assert elapsed >= 0
+        # Should be deterministic scoring only
+
+    @patch("src.dataset_quality_sub_score.fetch_readme")
+    @patch("src.dataset_quality_sub_score._get_ai_score")
+    def test_dataset_quality_sub_score_with_ai(
+        self, mock_ai_score: Mock, mock_fetch_readme: Mock
+    ) -> None:
+        """Test dataset quality scoring with AI enhancement."""
+        mock_fetch_readme.return_value = README_COMPREHENSIVE
+        mock_ai_score.return_value = 0.9  # High AI score
+
+        score_with_ai, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model", use_ai=True
+        )
+        score_no_ai, _ = dataset_quality.dataset_quality_sub_score(
+            "test-model", use_ai=False
+        )
+
+        assert 0.0 <= score_with_ai <= 1.0
+        assert elapsed >= 0
+        # AI-enhanced score might be different from deterministic
+        # (could be higher or lower depending on AI assessment)
+
 
 def test_all_evaluation_functions_return_valid_scores() -> None:
     """Test that all evaluation functions return valid scores."""
@@ -331,8 +437,9 @@ def test_score_consistency() -> None:
     with patch("src.dataset_quality_sub_score.fetch_readme") as mock_fetch:
         mock_fetch.return_value = README_COMPREHENSIVE
 
-        score1, _ = dataset_quality.dataset_quality_sub_score("test-model")
-        score2, _ = dataset_quality.dataset_quality_sub_score("test-model")
+        # Test consistency without AI (deterministic)
+        score1, _ = dataset_quality.dataset_quality_sub_score("test-model", use_ai=False)
+        score2, _ = dataset_quality.dataset_quality_sub_score("test-model", use_ai=False)
 
         assert score1 == score2, "Scores should be consistent across calls"
 
