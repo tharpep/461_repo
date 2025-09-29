@@ -270,11 +270,11 @@ class TestHybridEvaluation:
     ) -> None:
         """Test hybrid documentation scoring with AI."""
         mock_ai_score.return_value = 0.8
-        
+
         score = dataset_quality.evaluate_dataset_documentation_hybrid(
             README_WITH_DOCUMENTATION, "test-model", use_ai=True
         )
-        
+
         # Should be weighted combination of deterministic and AI scores
         deterministic_score = dataset_quality.evaluate_dataset_documentation(
             README_WITH_DOCUMENTATION
@@ -284,13 +284,12 @@ class TestHybridEvaluation:
 
     @patch("src.dataset_quality_sub_score._get_ai_score")
     def test_hybrid_ai_fallback(self, mock_ai_score: Mock) -> None:
-        """Test that hybrid functions fallback to deterministic when AI fails."""
+        """Test that hybrid functions fallback to deterministic."""
         mock_ai_score.return_value = 0.0  # AI failed
-        
         score = dataset_quality.evaluate_dataset_documentation_hybrid(
             README_WITH_DOCUMENTATION, "test-model", use_ai=True
         )
-        
+
         # Should fallback to deterministic score
         deterministic_score = dataset_quality.evaluate_dataset_documentation(
             README_WITH_DOCUMENTATION
@@ -326,21 +325,27 @@ class TestKnownDatasetChecking:
         """Test direct dataset name match in README."""
         readme = "This model uses the bookcorpus/bookcorpus dataset"
         encountered = {"bookcorpus/bookcorpus"}
-        result = dataset_quality.check_readme_for_known_datasets(readme, encountered)
+        result = dataset_quality.check_readme_for_known_datasets(
+            readme, encountered
+        )
         assert result is True
 
     def test_check_readme_for_known_datasets_partial_match(self) -> None:
         """Test partial dataset name match in README."""
         readme = "This model uses bookcorpus data for training"
         encountered = {"bookcorpus/bookcorpus"}
-        result = dataset_quality.check_readme_for_known_datasets(readme, encountered)
+        result = dataset_quality.check_readme_for_known_datasets(
+            readme, encountered
+        )
         assert result is True
 
     def test_check_readme_for_known_datasets_no_match(self) -> None:
         """Test no dataset match in README."""
         readme = "This model uses custom data"
         encountered = {"bookcorpus/bookcorpus"}
-        result = dataset_quality.check_readme_for_known_datasets(readme, encountered)
+        result = dataset_quality.check_readme_for_known_datasets(
+            readme, encountered
+        )
         assert result is False
 
     def test_check_readme_for_known_datasets_empty_sets(self) -> None:
@@ -354,7 +359,9 @@ class TestDatasetAvailabilityScoring:
 
     def test_no_dataset_available(self) -> None:
         """Test scoring when no dataset is available."""
-        score, elapsed = dataset_quality.dataset_quality_sub_score("test-model")
+        score, elapsed = dataset_quality.dataset_quality_sub_score(
+            "test-model"
+        )
         assert score == 0.0
         assert elapsed >= 0
 
@@ -362,43 +369,47 @@ class TestDatasetAvailabilityScoring:
     def test_dataset_available_via_link(self, mock_fetch_readme: Mock) -> None:
         """Test scoring when dataset is available via external link."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
-        
+
         score, elapsed = dataset_quality.dataset_quality_sub_score(
-            "test-model", 
+            "test-model",
             dataset_link="https://huggingface.co/datasets/test"
         )
-        
+
         assert score > 0.0
         assert elapsed >= 0
 
     @patch("src.dataset_quality_sub_score.fetch_readme")
     @patch("src.dataset_quality_sub_score.check_readme_for_known_datasets")
-    def test_dataset_available_via_encountered(self, mock_check: Mock, mock_fetch_readme: Mock) -> None:
+    def test_dataset_available_via_encountered(
+        self, mock_check: Mock, mock_fetch_readme: Mock
+    ) -> None:
         """Test scoring when dataset is available via encountered datasets."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
         mock_check.return_value = True  # Found reference to known dataset
-        
+
         encountered = {"known-dataset"}
         score, elapsed = dataset_quality.dataset_quality_sub_score(
-            "test-model", 
+            "test-model",
             encountered_datasets=encountered
         )
-        
+
         assert score > 0.0
         assert elapsed >= 0
 
     @patch("src.dataset_quality_sub_score.fetch_readme")
-    def test_dataset_tracking_updates_encountered_set(self, mock_fetch_readme: Mock) -> None:
+    def test_dataset_tracking_updates_encountered_set(
+        self, mock_fetch_readme: Mock
+    ) -> None:
         """Test that external dataset links are added to encountered set."""
         mock_fetch_readme.return_value = README_COMPREHENSIVE
-        
-        encountered = set()
+
+        encountered: set[str] = set()
         dataset_quality.dataset_quality_sub_score(
-            "test-model", 
+            "test-model",
             dataset_link="https://huggingface.co/datasets/test-dataset",
             encountered_datasets=encountered
         )
-        
+
         # The set should now contain the dataset identifier
         assert "test-dataset" in encountered
 
@@ -440,7 +451,7 @@ class TestDatasetQualitySubScore:
     def test_dataset_quality_sub_score_no_readme(
         self, mock_fetch_readme: Mock
     ) -> None:
-        """Test scoring when README cannot be fetched but dataset link provided."""
+        """Test when README cannot be fetched but dataset link provided."""
         mock_fetch_readme.return_value = None
 
         score, elapsed = dataset_quality.dataset_quality_sub_score(
@@ -477,7 +488,8 @@ class TestDatasetQualitySubScore:
         )
 
         assert elapsed >= 0
-        assert elapsed < 2.0  # Should be reasonably fast for mocked data with hybrid scoring
+        # Should be reasonably fast for mocked data with hybrid scoring
+        assert elapsed < 2.0
 
     @patch("src.dataset_quality_sub_score.fetch_readme")
     def test_dataset_quality_sub_score_no_ai(
@@ -487,7 +499,9 @@ class TestDatasetQualitySubScore:
         mock_fetch_readme.return_value = README_COMPREHENSIVE
 
         score_no_ai, elapsed = dataset_quality.dataset_quality_sub_score(
-            "test-model", dataset_link="https://huggingface.co/datasets/test", use_ai=False
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+            use_ai=False
         )
 
         assert 0.0 <= score_no_ai <= 1.0
@@ -504,10 +518,14 @@ class TestDatasetQualitySubScore:
         mock_ai_score.return_value = 0.9  # High AI score
 
         score_with_ai, elapsed = dataset_quality.dataset_quality_sub_score(
-            "test-model", dataset_link="https://huggingface.co/datasets/test", use_ai=True
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+            use_ai=True
         )
         score_no_ai, _ = dataset_quality.dataset_quality_sub_score(
-            "test-model", dataset_link="https://huggingface.co/datasets/test", use_ai=False
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+            use_ai=False
         )
 
         assert 0.0 <= score_with_ai <= 1.0
@@ -543,8 +561,16 @@ def test_score_consistency() -> None:
         mock_fetch.return_value = README_COMPREHENSIVE
 
         # Test consistency without AI (deterministic)
-        score1, _ = dataset_quality.dataset_quality_sub_score("test-model", dataset_link="https://huggingface.co/datasets/test", use_ai=False)
-        score2, _ = dataset_quality.dataset_quality_sub_score("test-model", dataset_link="https://huggingface.co/datasets/test", use_ai=False)
+        score1, _ = dataset_quality.dataset_quality_sub_score(
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+            use_ai=False,
+        )
+        score2, _ = dataset_quality.dataset_quality_sub_score(
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+            use_ai=False,
+        )
 
         assert score1 == score2, "Scores should be consistent across calls"
 
@@ -573,7 +599,10 @@ def test_weight_distribution() -> None:
     with patch("src.dataset_quality_sub_score.fetch_readme") as mock_fetch:
         mock_fetch.return_value = README_COMPREHENSIVE
 
-        score, _ = dataset_quality.dataset_quality_sub_score("test-model", dataset_link="https://huggingface.co/datasets/test")
+        score, _ = dataset_quality.dataset_quality_sub_score(
+            "test-model",
+            dataset_link="https://huggingface.co/datasets/test",
+        )
 
         # With all criteria scoring 1.0, final score should be 1.0
         # (0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 + 0.2 * 1.0 = 1.0)
