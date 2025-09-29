@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from typing import Tuple
+from typing import Tuple, Optional, Set
 
 from license_sub_score import fetch_readme
 
@@ -179,8 +179,8 @@ def check_readme_for_known_resources(readme: str,
 
 def available_dataset_code_score(model_id: str, code_link: str = "",
                                  dataset_link: str = "",
-                                 encountered_datasets: set[str] | None = None,
-                                 encountered_code: set[str] | None = None
+                                 encountered_datasets: Optional[Set[str]] = None,
+                                 encountered_code: Optional[Set[str]] = None
                                  ) -> Tuple[
                                      float, float]:
     """
@@ -217,19 +217,30 @@ def available_dataset_code_score(model_id: str, code_link: str = "",
     has_external_code = bool(code_link and code_link.strip())
     code_available = has_external_code
 
+    # Initialize known references
+    has_known_dataset = False
+    has_known_code = False
+    
     # If no external links, check README for references to known resources
     if not has_external_dataset or not has_external_code:
         readme_text = fetch_readme(model_id.strip())
 
         if readme_text:
+            # First check for direct dataset/code links in README
+            if not has_external_dataset:
+                dataset_available = detect_dataset_links(readme_text)
+            if not has_external_code:
+                code_available = detect_code_examples(readme_text)
+            
+            # Also check for references to known resources
             has_known_dataset, has_known_code = (
                 check_readme_for_known_resources(
                     readme_text, encountered_datasets, encountered_code))
 
-            # Update availability based on references
-            if not has_external_dataset:
+            # Update availability based on references (if not already found)
+            if not has_external_dataset and not dataset_available:
                 dataset_available = has_known_dataset
-            if not has_external_code:
+            if not has_external_code and not code_available:
                 code_available = has_known_code
 
     # Add external resources to tracking sets for future models
