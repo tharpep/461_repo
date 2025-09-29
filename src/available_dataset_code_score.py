@@ -128,8 +128,10 @@ def extract_dataset_identifier_code(dataset_link: str) -> str:
         return dataset_link.lower().strip()
 
 
-def check_readme_for_known_resources(readme: str, encountered_datasets: set[str],
-                                     encountered_code: set[str]) -> tuple[bool, bool]:
+def check_readme_for_known_resources(readme: str,
+                                     encountered_datasets: set[str],
+                                     encountered_code: set[str]
+                                     ) -> tuple[bool, bool]:
     """Check if README mentions previously encountered datasets or code."""
     if not readme:
         return False, False
@@ -178,7 +180,8 @@ def check_readme_for_known_resources(readme: str, encountered_datasets: set[str]
 def available_dataset_code_score(model_id: str, code_link: str = "",
                                  dataset_link: str = "",
                                  encountered_datasets: set[str] | None = None,
-                                 encountered_code: set[str] | None = None) -> Tuple[
+                                 encountered_code: set[str] | None = None
+                                 ) -> Tuple[
                                      float, float]:
     """
     Calculate Available Dataset and Code Score.
@@ -219,8 +222,9 @@ def available_dataset_code_score(model_id: str, code_link: str = "",
         readme_text = fetch_readme(model_id.strip())
 
         if readme_text:
-            has_known_dataset, has_known_code = check_readme_for_known_resources(
-                readme_text, encountered_datasets, encountered_code)
+            has_known_dataset, has_known_code = (
+                check_readme_for_known_resources(
+                    readme_text, encountered_datasets, encountered_code))
 
             # Update availability based on references
             if not has_external_dataset:

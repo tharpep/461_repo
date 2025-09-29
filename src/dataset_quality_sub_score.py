@@ -326,7 +326,8 @@ def check_readme_for_known_datasets(readme: str,
 
 
 def dataset_quality_sub_score(model_id: str, dataset_link: str = "",
-                              encountered_datasets: set[str] | None = None) -> Tuple[
+                              encountered_datasets: set[str] | None = None
+                              ) -> Tuple[
                                   float, float]:
     """
     Calculate dataset quality sub-score based on README analysis.
@@ -356,12 +357,14 @@ def dataset_quality_sub_score(model_id: str, dataset_link: str = "",
     has_external_dataset = bool(dataset_link and dataset_link.strip())
     dataset_available = has_external_dataset
 
-    # If no external dataset link, check README for references to known datasets
+    # If no external dataset link, check README for references to known
+    # datasets
     if not has_external_dataset:
         readme = fetch_readme(model_id)
         if readme and encountered_datasets:
             # Check if README references any previously encountered datasets
-            dataset_available = check_readme_for_known_datasets(readme, encountered_datasets)
+            dataset_available = check_readme_for_known_datasets(
+                readme, encountered_datasets)
 
     # If no dataset is available, return 0.0
     if not dataset_available:

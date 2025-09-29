@@ -51,7 +51,8 @@ def calculate_all_scores(code_link: str, dataset_link: str,
     """Calculate all scores for a given set of links."""
     model_name = extract_model_name(model_link)
     # Extract just the model name (without organization) for JSON display
-    display_name = model_name.split('/')[-1] if '/' in model_name else model_name
+    display_name = (model_name.split('/')[-1] if '/' in model_name
+                    else model_name)
     # Initialize result with model info
     result = {
         "name": display_name,
