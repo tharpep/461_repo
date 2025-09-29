@@ -2,10 +2,10 @@
 Centralized logging configuration and utilities.
 
 This module provides a comprehensive logging system with:
-- Multiple verbosity levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Verbosity levels: 0=silent, 1=informational, 2=debug (default=0)
 - File and console output with different formats
 - Log rotation and management
-- Environment variable configuration
+- Environment variable configuration (VERBOSITY)
 - Structured logging with correlation IDs
 """
 
@@ -35,19 +35,35 @@ class LoggingConfig:
         self.log_dir = Path("logs")
         self.log_dir.mkdir(exist_ok=True)
 
-        # Default configuration
-        self.console_level = self._get_log_level_from_env(
-            "CONSOLE_LOG_LEVEL", "INFO")
-        self.file_level = self._get_log_level_from_env(
-            "FILE_LOG_LEVEL", "DEBUG")
+        # Verbosity configuration: 0=silent, 1=informational, 2=debug
+        self.verbosity = self._get_verbosity_from_env("VERBOSITY", "0")
+        self.console_level = self._verbosity_to_log_level(self.verbosity)
+        self.file_level = logging.DEBUG  # Always log everything to file
         self.log_format = os.getenv("LOG_FORMAT", "detailed")
         self.max_file_size = int(os.getenv("MAX_LOG_FILE_SIZE", "10485760"))
         self.backup_count = int(os.getenv("LOG_BACKUP_COUNT", "5"))
 
-    def _get_log_level_from_env(self, env_var: str, default: str) -> int:
-        """Get log level from environment variable with fallback."""
-        level_str = os.getenv(env_var, default).upper()
-        return getattr(logging, level_str, logging.INFO)
+    def _get_verbosity_from_env(self, env_var: str, default: str) -> int:
+        """Get verbosity level from environment variable with fallback."""
+        verbosity_str = os.getenv(env_var, default)
+        try:
+            verbosity = int(verbosity_str)
+            if verbosity not in [0, 1, 2]:
+                raise ValueError(f"Verbosity must be 0, 1, or 2, got {verbosity}")
+            return verbosity
+        except ValueError:
+            return 0  # Default to silent
+
+    def _verbosity_to_log_level(self, verbosity: int) -> int:
+        """Convert verbosity level to logging level."""
+        if verbosity == 0:
+            return logging.CRITICAL + 1  # Silent - no output
+        elif verbosity == 1:
+            return logging.INFO  # Informational messages
+        elif verbosity == 2:
+            return logging.DEBUG  # Debug messages
+        else:
+            return logging.CRITICAL + 1  # Default to silent
 
     def get_formatter(
         self, format_type: str = "detailed"
@@ -153,9 +169,14 @@ class LoggerManager:
     def get_logger(self, name: str,
                    correlation_id: Optional[str] = None) -> logging.Logger:
         """Get or create a logger with the given name."""
-        if name not in self._loggers:
-            self._loggers[name] = self._config.setup_logger(
-                name, correlation_id)
+        # Always recreate config to pick up environment changes
+        self._config = LoggingConfig()
+        
+        # Clear and recreate logger to apply new configuration
+        if name in self._loggers:
+            del self._loggers[name]
+            
+        self._loggers[name] = self._config.setup_logger(name, correlation_id)
         return self._loggers[name]
 
     def set_correlation_id(self, correlation_id: str) -> None:
