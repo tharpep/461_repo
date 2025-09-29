@@ -56,7 +56,8 @@ class TestNetScoreCalculator(unittest.TestCase):
             results = calculate_net_score(model_id)
 
             # Test structure
-            self.assertIn("model_id", results)
+            self.assertIn("name", results)
+            self.assertIn("category", results)
             self.assertIn("net_score", results)
             self.assertIn("net_score_latency", results)
             self.assertIn("size_score", results)
@@ -67,7 +68,6 @@ class TestNetScoreCalculator(unittest.TestCase):
             self.assertIn("dataset_quality", results)
             self.assertIn("code_quality", results)
             self.assertIn("performance_claims", results)
-            self.assertIn("weight_breakdown", results)
 
             # Test data types
             self.assertIsInstance(results["net_score"], float)
@@ -111,11 +111,11 @@ class TestNetScoreCalculator(unittest.TestCase):
 
             # Expected calculation:
             # 0.05 * 0.5 (size) + 0.2 * 1.0 (license) + 0.2 * 0.5 (ramp_up)
-            # + 0.05 * 4 (bus_factor) + 0.15 * 0.8 (dataset_code)
+            # + 0.05 * 0.2 (bus_factor normalized: 4/20) + 0.15 * 0.8
             # + 0.15 * 0.6 (dataset_quality) + 0.1 * 0.5 (code_quality)
             # + 0.1 * 0.7 (performance)
             expected_score = (0.05 * 0.5 + 0.2 * 1.0 + 0.2 * 0.5 +
-                              0.05 * 4 + 0.15 * 0.8 + 0.15 * 0.6 +
+                              0.05 * 0.2 + 0.15 * 0.8 + 0.15 * 0.6 +
                               0.1 * 0.5 + 0.1 * 0.7)
 
             self.assertAlmostEqual(results["net_score"], expected_score,
@@ -147,25 +147,13 @@ class TestNetScoreCalculator(unittest.TestCase):
 
             results = calculate_net_score(model_id)
 
-            # Test weight breakdown calculations
-            breakdown = results["weight_breakdown"]
-            self.assertAlmostEqual(breakdown["size_contribution"],
-                                   0.05 * 0.5, places=3)
-            self.assertAlmostEqual(breakdown["license_contribution"],
-                                   0.2 * 0.8, places=3)
-            self.assertAlmostEqual(breakdown["ramp_up_contribution"],
-                                   0.2 * 0.6, places=3)
-            self.assertAlmostEqual(breakdown["bus_factor_contribution"],
-                                   0.05 * 3, places=3)
-            self.assertAlmostEqual(breakdown["dataset_code_contribution"],
-                                   0.15 * 0.4, places=3)
-            self.assertAlmostEqual(breakdown["dataset_quality_contribution"],
-                                   0.15 * 0.9, places=3)
-            self.assertAlmostEqual(breakdown["code_quality_contribution"],
-                                   0.1 * 0.5, places=3)
-            self.assertAlmostEqual(
-                breakdown["performance_claims_contribution"],
-                0.1 * 0.5, places=3)
+            # Test that individual scores are correctly stored
+            self.assertEqual(results["license"], 0.8)
+            self.assertEqual(results["ramp_up_time"], 0.6)
+            self.assertEqual(results["bus_factor"], 0.15)  # 3/20 normalized
+            self.assertEqual(results["dataset_and_code_score"], 0.4)
+            self.assertEqual(results["dataset_quality"], 0.9)
+            self.assertEqual(results["performance_claims"], 0.5)
 
     def test_default_values_for_missing_functions(self) -> None:
         """Test that default values are used for missing functions."""
@@ -260,7 +248,7 @@ class TestNetScoreCalculator(unittest.TestCase):
                 mock_performance.return_value = (0.6, 0.08)
 
                 results = calculate_net_score(model_id)
-                self.assertEqual(results["model_id"], model_id)
+                self.assertEqual(results["name"], model_id)
 
     def test_net_score_range(self) -> None:
         """Test that NetScore is within reasonable range."""
