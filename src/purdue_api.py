@@ -84,17 +84,25 @@ class PurdueGenAI:
                         response.read().decode('utf-8')
                     )
                     # Type-safe access to nested dictionary
-                    if (isinstance(response_data, dict) and 
-                        "choices" in response_data and 
-                        isinstance(response_data["choices"], list) and
-                        len(response_data["choices"]) > 0 and
-                        isinstance(response_data["choices"][0], dict) and
-                        "message" in response_data["choices"][0] and
-                        isinstance(response_data["choices"][0]["message"], dict) and
-                        "content" in response_data["choices"][0]["message"]):
-                        return str(response_data["choices"][0]["message"]["content"])
-                    else:
+                    if not isinstance(response_data, dict):
                         raise Exception("Invalid response format from API")
+                    if "choices" not in response_data:
+                        raise Exception("Invalid response format from API")
+                    if not isinstance(response_data["choices"], list):
+                        raise Exception("Invalid response format from API")
+                    if len(response_data["choices"]) == 0:
+                        raise Exception("Invalid response format from API")
+                    if not isinstance(response_data["choices"][0], dict):
+                        raise Exception("Invalid response format from API")
+                    if "message" not in response_data["choices"][0]:
+                        raise Exception("Invalid response format from API")
+                    message = response_data["choices"][0]["message"]
+                    if not isinstance(message, dict):
+                        raise Exception("Invalid response format from API")
+                    if "content" not in message:
+                        raise Exception("Invalid response format from API")
+                    content = message["content"]
+                    return str(content)
                 else:
                     error_text = response.read().decode('utf-8')
                     raise Exception(
